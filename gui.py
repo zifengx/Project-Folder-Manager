@@ -1,10 +1,18 @@
+import sys
 import os
 import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 from core import ensure_structure_json, load_structure, create_project
 
 STRUCTURE_JSON = os.path.join(os.path.dirname(__file__), "structure.json")
-PROGRAM_ROOT = os.path.dirname(os.path.abspath(__file__))
+
+if getattr(sys, 'frozen', False):
+    # Running as a bundled executable
+    PROGRAM_ROOT = os.path.dirname(sys.executable)
+else:
+    # Running as a script
+    PROGRAM_ROOT = os.path.dirname(os.path.abspath(__file__))
+
 PARENT_OF_PROGRAM_ROOT = os.path.dirname(PROGRAM_ROOT)
 
 def run_app():
@@ -117,8 +125,8 @@ def run_app():
     # Parent Directory widgets at the top
     tk.Label(root, text="Parent Directory:").grid(row=0, column=0, padx=10, pady=5, sticky="e")
     parent_dir_var = tk.StringVar()
-    # Set default to folder above program root if not selected
-    parent_dir_var.set(PARENT_OF_PROGRAM_ROOT)
+    # Set default to program root folder (works for both script and exe)
+    parent_dir_var.set(PROGRAM_ROOT)
 
     tk.Entry(root, textvariable=parent_dir_var, width=40, state="readonly").grid(row=0, column=1, padx=10, pady=5)
     tk.Button(root, text="Browse...", command=select_directory).grid(row=0, column=2, padx=5, pady=5)
