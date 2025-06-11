@@ -3,14 +3,24 @@
         {
             "name": "backup",
             "folders": [
-                {"name": "database"},
-                {"name": "images"}
+                {
+                    "name": "database"
+                },
+                {
+                    "name": "images"
+                }
             ]
         },
-        {"name": "files"},
-        {"name": "queries"}
+        {
+            "name": "files"
+        },
+        {
+            "name": "queries"
+        }
     ],
     "files": [
-        {"name": "code.txt"}
+        {
+            "name": "code.txt"
+        }
     ]
 }
