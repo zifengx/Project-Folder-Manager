@@ -253,7 +253,16 @@ def run_app():
 
         config_win = tk.Toplevel(root)
         config_win.title("Edit Project Structure")
-        config_win.geometry("500x400")
+        win_width, win_height = 420, 520  # Increased height for better visibility
+        config_win.geometry(f"{win_width}x{win_height}")
+
+        # Center the edit project structure window
+        config_win.update_idletasks()
+        screen_width = config_win.winfo_screenwidth()
+        screen_height = config_win.winfo_screenheight()
+        x = (screen_width // 2) - (win_width // 2)
+        y = (screen_height // 2) - (win_height // 2)
+        config_win.geometry(f"{win_width}x{win_height}+{x}+{y}")
 
         tk.Label(config_win, text="Folders:").grid(row=0, column=0, padx=10, pady=5, sticky="w")
         folders_list = tk.Listbox(config_win, height=10, width=30)
@@ -281,7 +290,7 @@ def run_app():
     menubar = tk.Menu(root)
     config_menu = tk.Menu(menubar, tearoff=0)
     config_menu.add_command(label="Edit Structure...", command=open_config_panel)
-    menubar.add_cascade(label="Config", menu=config_menu)
+    menubar.add_cascade(label="Structure", menu=config_menu)
 
     parent_dir_menu = tk.Menu(menubar, tearoff=0)
     parent_dir_menu.add_command(label="Set Parent Directory...", command=select_directory_menu)
