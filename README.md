@@ -1,13 +1,14 @@
 # Project Folder Manager
 
-A simple GUI tool to create project folder structures based on a configurable JSON template.
+A simple GUI tool to create project folder structures based on a configurable template.
 
 ## Features
 
 - Create a new project folder structure with one click.
-- Configure the folder and file structure via a JSON file (`structure.json`).
+- Configure the folder and txt file structure via a user-friendly GUI (no need to edit JSON).
 - GUI for selecting parent directory and project name.
-- Edit the structure JSON directly from the app (Config menu).
+- Edit the structure and parent directory from the app (top menu).
+- All configuration and structure data are stored in a local SQLite database (`settings.db`).
 - Packaged as a standalone Windows executable.
 
 ## Usage
@@ -38,37 +39,24 @@ A simple GUI tool to create project folder structures based on a configurable JS
    ```
    The executable will be in the `dist` folder.
 
+   Or use the command:
+   ```
+   pyinstaller --noconsole --onefile main.py
+   ```
+
+3. No extra data files are needed.  
+   All configuration and structure data are stored in `settings.db` automatically when you run the program.
+
 ## Customizing the Structure
 
-- Edit `structure.json` to define your folder and file template.
-- Or use the "Config" menu in the app to edit the structure.
-
-Example `structure.json`:
-```json
-{
-    "folders": [
-        {
-            "name": "backup",
-            "folders": [
-                {"name": "database"},
-                {"name": "images"}
-            ]
-        },
-        {"name": "files"},
-        {"name": "queries"}
-    ],
-    "files": [
-        {"name": "code.txt"}
-    ]
-}
-```
+- Use the "Config" menu in the app to edit folders and txt files.
+- Use the "Parent Directory" menu to set the default parent directory for new projects.
 
 ## Project Structure
 
 - `main.py` - Entry point.
-- `gui.py` - GUI logic.
+- `gui.py` - GUI logic and settings/structure database.
 - `core.py` - Core logic for structure creation.
-- `structure.json` - Folder/file template.
 - `main.spec` - PyInstaller build config.
 - `.gitignore` - Ignore Python/IDE/build files.
 
