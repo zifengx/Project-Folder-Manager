@@ -1,14 +1,17 @@
 1. Install PyInstaller if you haven't:
    pip install pyinstaller
 
-2. Open a terminal in this folder.
+2. Make sure structure.json exists in this folder and contains your default structure.
 
-3. Run:
-   pyinstaller --noconsole --onefile main.py
+3. Open a terminal in this folder.
+
+4. Run:
+   pyinstaller --noconsole --onefile --add-data "structure.json;." main.py
 
    - '--noconsole' hides the terminal window (for GUI apps).
    - '--onefile' creates a single .exe file.
+   - '--add-data "structure.json;."' bundles structure.json with the executable.
 
-4. The .exe will be in the 'dist' folder.
+5. The .exe will be in the 'dist' folder.
 
-5. All configuration and structure data are now stored in 'settings.db' automatically when you run the program.
+6. The program will always load and update structure.json in the same folder as the .exe.

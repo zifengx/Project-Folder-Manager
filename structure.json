@@ -1,0 +1,29 @@
+{
+    "folders": [
+        {
+            "name": "backup",
+            "folders": [
+                {
+                    "name": "database"
+                },
+                {
+                    "name": "images"
+                }
+            ]
+        },
+        {
+            "name": "files"
+        },
+        {
+            "name": "queries"
+        },
+        {
+            "name": "code"
+        }
+    ],
+    "files": [
+        {
+            "name": "code.txt"
+        }
+    ]
+}
