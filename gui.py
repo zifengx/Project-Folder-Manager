@@ -3,6 +3,7 @@ import os
 import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 from core import ensure_structure_json, load_structure, create_project
+import json
 
 STRUCTURE_JSON = os.path.join(os.path.dirname(__file__), "structure.json")
 
@@ -15,18 +16,31 @@ else:
 
 PARENT_OF_PROGRAM_ROOT = os.path.dirname(PROGRAM_ROOT)
 
+def load_parent_dir():
+    try:
+        struct = load_structure()
+        return struct.get("parent_directory", PROGRAM_ROOT)
+    except Exception:
+        return PROGRAM_ROOT
+
+def save_parent_dir(path):
+    try:
+        struct = load_structure()
+        struct["parent_directory"] = path
+        with open(STRUCTURE_JSON, "w", encoding="utf-8") as f:
+            json.dump(struct, f, indent=2)
+    except Exception as e:
+        print(f"Warning: Could not save parent directory: {e}")
+
 def run_app():
+    root = tk.Tk()
+    root.title("Project Folder Manager")
     try:
         ensure_structure_json()
     except Exception as e:
-        tk.Tk().withdraw()
+        root.withdraw()
         messagebox.showerror("Error", str(e))
         return
-
-    def select_directory():
-        selected = filedialog.askdirectory(title="Select parent directory for project", initialdir=parent_dir_var.get())
-        if selected:
-            parent_dir_var.set(selected)
 
     def simple_input_dialog(parent, prompt):
         dialog = tk.Toplevel(parent)
@@ -57,7 +71,7 @@ def run_app():
         return simple_input_dialog(root, f"Enter content for {filename}:")
 
     def create_project_gui():
-        parent_dir = parent_dir_var.get().strip()
+        parent_dir = load_parent_dir().strip()
         project_name = project_name_var.get().strip()
         if not parent_dir:
             messagebox.showerror("Error", "Please select a parent directory.")
@@ -77,44 +91,167 @@ def run_app():
             return
         messagebox.showinfo("Success", f"Project '{project_name}' structure created at {project_path}")
 
-    def open_config_panel():
-        def save_structure():
-            try:
-                new_json = text.get("1.0", tk.END)
-                import json
-                parsed = json.loads(new_json)
-                with open(STRUCTURE_JSON, "w", encoding="utf-8") as f:
-                    f.write(json.dumps(parsed, indent=4))
-                messagebox.showinfo("Saved", "Structure saved successfully.")
-                config_win.destroy()
-            except Exception as e:
-                messagebox.showerror("Error", f"Invalid JSON: {e}")
-
-        config_win = tk.Toplevel(root)
-        config_win.title("Edit Project Structure")
-        config_win.geometry("600x500")
-        tk.Label(config_win, text="Edit the folder structure JSON below:").pack(pady=5)
-        text = scrolledtext.ScrolledText(config_win, wrap=tk.WORD, width=70, height=25)
+    # --- Config/Structure Editor Panel (in main window) ---
+    import json
+    from tkinter import ttk
+    def load_structure_json():
         try:
             with open(STRUCTURE_JSON, "r", encoding="utf-8") as f:
-                text.insert(tk.END, f.read())
+                return json.load(f)
         except Exception:
-            text.insert(tk.END, '{\n    "folders": [],\n    "files": []\n}')
-        text.pack(padx=10, pady=5, fill=tk.BOTH, expand=True)
-        tk.Button(config_win, text="Save", command=save_structure).pack(pady=10)
+            return {"folders": [], "files": []}
+    def save_structure_json(struct):
+        with open(STRUCTURE_JSON, "w", encoding="utf-8") as f:
+            json.dump(struct, f, indent=4)
+    def refresh_tree():
+        tree.delete(*tree.get_children())
+        def insert_items(parent, items, is_folder):
+            for item in items:
+                node = tree.insert(parent, "end", text=item["name"], open=True, values=("Folder" if is_folder else "File"))
+                if is_folder and "folders" in item:
+                    insert_items(node, item["folders"], True)
+        struct = load_structure_json()
+        insert_items("", struct.get("folders", []), True)
+        insert_items("", struct.get("files", []), False)
+    def add_folder():
+        selected = tree.focus()
+        name = simple_input_dialog(root, "Folder name:")
+        if not name:
+            return
+        struct = load_structure_json()
+        def add_to(items):
+            items.append({"name": name, "folders": []})
+        if not selected:
+            add_to(struct["folders"])
+        else:
+            def find_and_add(items, node):
+                for item in items:
+                    if item["name"] == tree.item(node, "text"):
+                        if "folders" not in item:
+                            item["folders"] = []
+                        add_to(item["folders"])
+                        return True
+                    if "folders" in item and find_and_add(item["folders"], node):
+                        return True
+                return False
+            find_and_add(struct["folders"], selected)
+        save_structure_json(struct)
+        refresh_tree()
+    def add_file():
+        name = simple_input_dialog(root, "File name:")
+        if not name:
+            return
+        struct = load_structure_json()
+        struct["files"].append({"name": name})
+        save_structure_json(struct)
+        refresh_tree()
+    def remove_item():
+        selected = tree.focus()
+        if not selected:
+            return
+        name = tree.item(selected, "text")
+        kind = tree.item(selected, "values")[0]
+        struct = load_structure_json()
+        if kind == "Folder":
+            def remove_from(items):
+                for i, item in enumerate(items):
+                    if item["name"] == name:
+                        del items[i]
+                        return True
+                    if "folders" in item and remove_from(item["folders"]):
+                        return True
+                return False
+            remove_from(struct["folders"])
+        else:
+            struct["files"] = [f for f in struct["files"] if f["name"] != name]
+        save_structure_json(struct)
+        refresh_tree()
+    def reset_to_saved():
+        refresh_tree()
+        text.delete("1.0", tk.END)
+        with open(STRUCTURE_JSON, "r", encoding="utf-8") as f:
+            text.insert(tk.END, f.read())
+    def save_from_json():
+        try:
+            new_json = text.get("1.0", tk.END)
+            parsed = json.loads(new_json)
+            save_structure_json(parsed)
+            messagebox.showinfo("Saved", "Structure saved successfully.")
+            refresh_tree()
+        except Exception as e:
+            messagebox.showerror("Error", f"Invalid JSON: {e}")
+    config_frame = tk.LabelFrame(root, text="Config", padx=5, pady=5)
+    config_frame.grid(row=3, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+    config_frame.columnconfigure(0, weight=1)
+    config_frame.rowconfigure(0, weight=1)
+    # Parent Directory Setting
+    pd_frame = tk.Frame(config_frame)
+    struct = load_structure_json()
+    pd_value = struct.get("parent_directory", "").strip() or PROGRAM_ROOT
+    pd_var = tk.StringVar(value=pd_value)
+    pd_label = tk.Label(pd_frame, text="Parent Directory:")
+    pd_label.pack(side=tk.LEFT, padx=(0,5))
+    pd_entry = tk.Entry(pd_frame, textvariable=pd_var, width=40, state="readonly")
+    pd_entry.pack(side=tk.LEFT, padx=(0,5))
+    def browse_parent_dir():
+        selected = filedialog.askdirectory(title="Select parent directory", initialdir=pd_var.get())
+        if selected:
+            pd_var.set(selected)
+            try:
+                struct = load_structure_json()
+                struct["parent_directory"] = selected
+                save_structure_json(struct)
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to save parent directory: {e}")
+    tk.Button(pd_frame, text="Browse...", command=browse_parent_dir).pack(side=tk.LEFT)
+    pd_frame.pack(pady=5, anchor="w")
+    # Add a titled frame for the folder structure editor, using only pack inside
+    structure_frame = tk.LabelFrame(config_frame, text="Folder Structure", padx=5, pady=5)
+    structure_frame.pack(fill=tk.BOTH, expand=True, padx=0, pady=0)
+    notebook = ttk.Notebook(structure_frame)
+    visual_frame = tk.Frame(notebook)
+    tree = ttk.Treeview(visual_frame, columns=("Type",), show="tree headings")
+    tree.heading("#0", text="Name")
+    tree.heading("Type", text="Type")
+    tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+    btn_frame = tk.Frame(visual_frame)
+    tk.Button(btn_frame, text="Add Folder", command=add_folder).pack(side=tk.LEFT, padx=5)
+    tk.Button(btn_frame, text="Add File", command=add_file).pack(side=tk.LEFT, padx=5)
+    tk.Button(btn_frame, text="Remove Selected", command=remove_item).pack(side=tk.LEFT, padx=5)
+    tk.Button(btn_frame, text="Reset", command=reset_to_saved).pack(side=tk.LEFT, padx=5)
+    btn_frame.pack(pady=5)
+    visual_frame.pack(fill=tk.BOTH, expand=True)
+    json_frame = tk.Frame(notebook)
+    text = scrolledtext.ScrolledText(json_frame, wrap=tk.WORD, width=70, height=15)
+    try:
+        with open(STRUCTURE_JSON, "r", encoding="utf-8") as f:
+            text.insert(tk.END, f.read())
+    except Exception:
+        text.insert(tk.END, '{\n    "folders": [],\n    "files": []\n}')
+    text.pack(padx=10, pady=5, fill=tk.BOTH, expand=True)
+    tk.Button(json_frame, text="Save", command=save_from_json).pack(pady=10)
+    tk.Button(json_frame, text="Reset", command=reset_to_saved).pack(pady=5)
+    notebook.add(visual_frame, text="Visual Editor")
+    notebook.add(json_frame, text="Raw JSON")
+    notebook.pack(fill=tk.BOTH, expand=True)
+    refresh_tree()
+    # --- End Config/Structure Editor Panel ---
 
-    root = tk.Tk()
-    root.title("Project Folder Manager")
+    # --- Center the Config section and make it fill the window ---
+    config_frame.grid(row=1, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+    root.grid_rowconfigure(1, weight=1)
+    root.grid_columnconfigure(0, weight=1)
+    root.grid_columnconfigure(1, weight=1)
+    root.grid_columnconfigure(2, weight=1)
+    config_frame.grid_propagate(False)
+    config_frame.pack_propagate(False)
+    config_frame.rowconfigure(1, weight=1)
+    config_frame.columnconfigure(0, weight=1)
+    notebook.pack(fill=tk.BOTH, expand=True)
+    # --- End Center ---
 
-    # Add menu for config
-    menubar = tk.Menu(root)
-    config_menu = tk.Menu(menubar, tearoff=0)
-    config_menu.add_command(label="Edit Structure...", command=open_config_panel)
-    menubar.add_cascade(label="Config", menu=config_menu)
-    root.config(menu=menubar)
-
-    # Center the window after widgets are created
-    def center_window(win, width=500, height=180):
+    # Set a larger initial window size and center it
+    def center_window(win, width=800, height=600):
         win.update_idletasks()
         screen_width = win.winfo_screenwidth()
         screen_height = win.winfo_screenheight()
@@ -122,21 +259,16 @@ def run_app():
         y = (screen_height // 2) - (height // 2)
         win.geometry(f"{width}x{height}+{x}+{y}")
 
-    # Parent Directory widgets at the top
-    tk.Label(root, text="Parent Directory:").grid(row=0, column=0, padx=10, pady=5, sticky="e")
-    parent_dir_var = tk.StringVar()
-    # Set default to program root folder (works for both script and exe)
-    parent_dir_var.set(PROGRAM_ROOT)
-
-    tk.Entry(root, textvariable=parent_dir_var, width=40, state="readonly").grid(row=0, column=1, padx=10, pady=5)
-    tk.Button(root, text="Browse...", command=select_directory).grid(row=0, column=2, padx=5, pady=5)
-
-    # Project Name widgets below
-    tk.Label(root, text="Project Name:").grid(row=1, column=0, padx=10, pady=5, sticky="e")
+    # Project Name widgets at the top, all side by side and tightly spaced
+    tk.Label(root, text="Project Name:").grid(row=0, column=0, padx=(10,0), pady=10, sticky="w")
     project_name_var = tk.StringVar()
-    tk.Entry(root, textvariable=project_name_var, width=40).grid(row=1, column=1, padx=10, pady=5)
+    tk.Entry(root, textvariable=project_name_var, width=40).grid(row=0, column=1, padx=(0,0), pady=10, sticky="w")
+    tk.Button(root, text="Create Project", command=create_project_gui).grid(row=0, column=2, padx=(4,10), pady=10, sticky="w")
 
-    tk.Button(root, text="Create Project", command=create_project_gui).grid(row=2, column=1, pady=15)
+    # Make the window stay on top at launch
+    root.lift()
+    root.attributes('-topmost', True)
+
 
     center_window(root)
 
