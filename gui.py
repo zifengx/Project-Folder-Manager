@@ -191,7 +191,7 @@ def run_app():
     pd_var = tk.StringVar(value=pd_value)
     pd_label = tk.Label(pd_frame, text="Parent Directory:")
     pd_label.pack(side=tk.LEFT, padx=(0,5))
-    pd_entry = tk.Entry(pd_frame, textvariable=pd_var, width=40, state="readonly")
+    pd_entry = tk.Entry(pd_frame, textvariable=pd_var, width=80, state="readonly")
     pd_entry.pack(side=tk.LEFT, padx=(0,5))
     def browse_parent_dir():
         selected = filedialog.askdirectory(title="Select parent directory", initialdir=pd_var.get())
@@ -264,11 +264,6 @@ def run_app():
     project_name_var = tk.StringVar()
     tk.Entry(root, textvariable=project_name_var, width=40).grid(row=0, column=1, padx=(0,0), pady=10, sticky="w")
     tk.Button(root, text="Create Project", command=create_project_gui).grid(row=0, column=2, padx=(4,10), pady=10, sticky="w")
-
-    # Make the window stay on top at launch
-    root.lift()
-    root.attributes('-topmost', True)
-
 
     center_window(root)
 
