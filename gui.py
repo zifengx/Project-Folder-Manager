@@ -89,7 +89,7 @@ def run_app():
         except Exception as e:
             messagebox.showerror("Error", str(e))
             return
-        notice_var.set(f"Created '{project_name}'!")
+        notice_var.set(f"Project '{project_name}' Created!")
 
     # --- Config/Structure Editor Panel (in main window) ---
     import json
