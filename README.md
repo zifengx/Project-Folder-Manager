@@ -25,7 +25,7 @@ A simple GUI tool to create project folder structures based on a configurable te
 ### As Windows Executable
 
 1. Download or build the `.exe` (see below).
-2. Double-click `ProjectFolderManager_v1.0.0.exe` in the `dist` folder.
+2. Double-click `main.exe` in the `dist` folder.
 
 ## Building the Executable
 
