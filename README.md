@@ -8,7 +8,7 @@ A simple GUI tool to create project folder structures based on a configurable te
 - Configure the folder and txt file structure via a user-friendly GUI (no need to edit JSON).
 - GUI for selecting parent directory and project name.
 - Edit the structure and parent directory from the app (top menu).
-- All configuration and structure data are stored in a local SQLite database (`settings.db`).
+- All configuration and structure data are stored in `structure.json`.
 - Packaged as a standalone Windows executable.
 
 ## Usage
@@ -41,22 +41,21 @@ A simple GUI tool to create project folder structures based on a configurable te
 
    Or use the command:
    ```
-   pyinstaller --noconsole --onefile main.py
+   pyinstaller --noconsole --onefile --add-data "structure.json;." main.py
    ```
 
 3. No extra data files are needed.  
-   All configuration and structure data are stored in `settings.db` automatically when you run the program.
+   All configuration and structure data are stored in `structure.json` automatically when you run the program.
 
 ## Customizing the Structure
 
-- Use the "Config" menu in the app to edit folders and txt files.
-- Use the "Parent Directory" menu to set the default parent directory for new projects.
+- Use the "Config" section in the app to edit folders and txt files.
+- Use the "Parent Directory" setting to set the default parent directory for new projects.
 
 ## Project Structure
 
-- `main.py` - Entry point.
-- `gui.py` - GUI logic and settings/structure database.
-- `core.py` - Core logic for structure creation.
+- `main.py` - All logic and GUI.
+- `structure.json` - Folder/file template and default parent directory.
 - `main.spec` - PyInstaller build config.
 - `.gitignore` - Ignore Python/IDE/build files.
 
