@@ -3,28 +3,39 @@
     "folders": [
         {
             "name": "backup",
+            "comment": "Backup related folders",
             "folders": [
                 {
-                    "name": "database"
+                    "name": "database",
+                    "comment": "Database backups"
                 },
                 {
-                    "name": "images"
+                    "name": "images",
+                    "comment": "Image backups"
                 }
             ]
         },
         {
-            "name": "files"
+            "name": "files",
+            "comment": "General files"
         },
         {
-            "name": "queries"
+            "name": "docs",
+            "comment": "General docs, normally need to sync with the cloud"
         },
         {
-            "name": "code"
+            "name": "queries",
+            "comment": "Query files for database operations"
+        },
+        {
+            "name": "code",
+            "comment": "Source code"
         }
     ],
     "files": [
         {
-            "name": "code.txt"
+            "name": "code.txt",
+            "comment": "a link to GitHub or SVN"
         }
     ]
 }

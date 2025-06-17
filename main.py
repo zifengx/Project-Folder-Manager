@@ -100,7 +100,8 @@ def run_app():
         tree.delete(*tree.get_children())
         def insert_items(parent, items, is_folder):
             for item in items:
-                node = tree.insert(parent, "end", text=item["name"], open=True, values=("Folder" if is_folder else "File"))
+                comment = item.get("comment", "")
+                node = tree.insert(parent, "end", text=item["name"], open=True, values=("Folder" if is_folder else "File", comment))
                 if is_folder and "folders" in item:
                     insert_items(node, item["folders"], True)
         struct = load_structure_json()
@@ -129,14 +130,44 @@ def run_app():
         dialog.geometry(f"{width}x{height}+{x}+{y}")
         parent.wait_window(dialog)
         return result["value"]
+    def name_comment_dialog(parent, title, name_label, comment_label):
+        dialog = tk.Toplevel(parent)
+        dialog.title(title)
+        tk.Label(dialog, text=name_label).pack(padx=10, pady=(10, 2), anchor="w")
+        name_entry = tk.Entry(dialog, width=50)
+        name_entry.pack(padx=10, pady=(0, 8))
+        tk.Label(dialog, text=comment_label).pack(padx=10, pady=(0, 2), anchor="w")
+        comment_entry = tk.Entry(dialog, width=50)
+        comment_entry.pack(padx=10, pady=(0, 10))
+        name_entry.focus_set()
+        result = {"name": None, "comment": None}
+        def on_ok():
+            result["name"] = name_entry.get()
+            result["comment"] = comment_entry.get()
+            dialog.destroy()
+        tk.Button(dialog, text="OK", command=on_ok).pack(pady=(0, 10))
+        dialog.transient(parent)
+        dialog.grab_set()
+        dialog.update_idletasks()
+        width, height = 400, 200
+        screen_width = dialog.winfo_screenwidth()
+        screen_height = dialog.winfo_screenheight()
+        x = (screen_width // 2) - (width // 2)
+        y = (screen_height // 2) - (height // 2)
+        dialog.geometry(f"{width}x{height}+{x}+{y}")
+        parent.wait_window(dialog)
+        return result["name"], result["comment"]
     def add_folder():
         selected = tree.focus()
-        name = simple_input_dialog(root, "Folder name:")
+        name, comment = name_comment_dialog(root, "Add Folder", "Folder name:", "Comment (optional):")
         if not name:
             return
         struct = load_structure_json()
         def add_to(items):
-            items.append({"name": name, "folders": []})
+            folder = {"name": name, "folders": []}
+            if comment:
+                folder["comment"] = comment
+            items.append(folder)
         if not selected:
             add_to(struct["folders"])
         else:
@@ -154,11 +185,14 @@ def run_app():
         save_structure_json(struct)
         refresh_tree()
     def add_file():
-        name = simple_input_dialog(root, "File name:")
+        name, comment = name_comment_dialog(root, "Add File", "File name (with suffix):", "Comment (optional):")
         if not name:
             return
         struct = load_structure_json()
-        struct["files"].append({"name": name})
+        file_obj = {"name": name}
+        if comment:
+            file_obj["comment"] = comment
+        struct["files"].append(file_obj)
         save_structure_json(struct)
         refresh_tree()
     def remove_item():
@@ -224,9 +258,13 @@ def run_app():
     structure_frame.pack(fill=tk.BOTH, expand=True, padx=0, pady=0)
     notebook = ttk.Notebook(structure_frame)
     visual_frame = tk.Frame(notebook)
-    tree = ttk.Treeview(visual_frame, columns=("Type",), show="tree headings")
+    tree = ttk.Treeview(visual_frame, columns=("Type", "Comment"), show="tree headings")
     tree.heading("#0", text="Name")
     tree.heading("Type", text="Type")
+    tree.heading("Comment", text="Comment")
+    tree.column("#0", width=120, anchor="w")
+    tree.column("Type", width=60, anchor="center")
+    tree.column("Comment", width=320, anchor="w")
     tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
     btn_frame = tk.Frame(visual_frame)
     tk.Button(btn_frame, text="Add Folder", command=add_folder).pack(side=tk.LEFT, padx=5)
