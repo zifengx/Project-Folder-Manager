@@ -68,14 +68,14 @@ def run_app():
         return result["value"]
 
     def file_content_callback(filename):
-        return simple_input_dialog(root, f"Enter content for {filename}:")
+        return ""  # Always return empty content for files
 
     def create_project_gui():
         parent_dir = load_parent_dir().strip()
         project_name = project_name_var.get().strip()
+        notice_var.set("")
         if not parent_dir:
-            messagebox.showerror("Error", "Please select a parent directory.")
-            return
+            parent_dir = PROGRAM_ROOT  # Use default if not set
         if not project_name:
             messagebox.showerror("Error", "Project name cannot be empty.")
             return
@@ -89,7 +89,7 @@ def run_app():
         except Exception as e:
             messagebox.showerror("Error", str(e))
             return
-        messagebox.showinfo("Success", f"Project '{project_name}' structure created at {project_path}")
+        notice_var.set(f"Created '{project_name}'!")
 
     # --- Config/Structure Editor Panel (in main window) ---
     import json
@@ -238,13 +238,12 @@ def run_app():
     # --- End Config/Structure Editor Panel ---
 
     # --- Center the Config section and make it fill the window ---
-    config_frame.grid(row=1, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+    config_frame.grid(row=1, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
     root.grid_rowconfigure(1, weight=1)
-    root.grid_columnconfigure(0, weight=1)
-    root.grid_columnconfigure(1, weight=1)
-    root.grid_columnconfigure(2, weight=1)
-    config_frame.grid_propagate(False)
-    config_frame.pack_propagate(False)
+    for col in range(4):
+        root.grid_columnconfigure(col, weight=1)
+    config_frame.grid_propagate(True)
+    config_frame.pack_propagate(True)
     config_frame.rowconfigure(1, weight=1)
     config_frame.columnconfigure(0, weight=1)
     notebook.pack(fill=tk.BOTH, expand=True)
@@ -263,7 +262,10 @@ def run_app():
     tk.Label(root, text="Project Name:").grid(row=0, column=0, padx=(10,0), pady=10, sticky="w")
     project_name_var = tk.StringVar()
     tk.Entry(root, textvariable=project_name_var, width=40).grid(row=0, column=1, padx=(0,0), pady=10, sticky="w")
-    tk.Button(root, text="Create Project", command=create_project_gui).grid(row=0, column=2, padx=(4,10), pady=10, sticky="w")
+    tk.Button(root, text="Create Project", command=create_project_gui).grid(row=0, column=2, padx=(4,0), pady=10, sticky="w")
+    notice_var = tk.StringVar(value=" ")  # Placeholder to reserve space
+    notice_label = tk.Label(root, textvariable=notice_var, fg="green", width=24, anchor="w")
+    notice_label.grid(row=0, column=3, padx=(10,10), pady=10, sticky="w")
 
     center_window(root)
 
