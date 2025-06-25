@@ -5,7 +5,7 @@ from tkinter import filedialog, messagebox, scrolledtext
 import json
 
 APP_NAME = "Project Folder Manager"
-VERSION = "1.1.3"
+VERSION = "1.1.1"
 APP_TITLE = f"{APP_NAME} v{VERSION}"
 
 # Use a persistent structure file in the exe/script directory
@@ -19,10 +19,39 @@ STRUCTURE_JSON = os.path.join(PROGRAM_ROOT, STRUCTURE_FILENAME)
 
 # --- Structure logic ---
 def ensure_structure_json():
+    import tempfile
+    temp_json = os.path.join(tempfile.gettempdir(), STRUCTURE_FILENAME)
+    # Try to get from PyInstaller bundle if running as frozen
+    bundled_json = None
+    if getattr(sys, 'frozen', False):
+        bundled_json = os.path.join(sys._MEIPASS, STRUCTURE_FILENAME)
+
+    def try_copy(src_path, dst_path):
+        with open(src_path, "r", encoding="utf-8") as src, open(dst_path, "w", encoding="utf-8") as dst:
+            dst.write(src.read())
+
     if not os.path.exists(STRUCTURE_JSON):
-        raise FileNotFoundError(f"Structure file '{STRUCTURE_JSON}' does not exist. Please create it first.")
+        # 1. Try PyInstaller bundle
+        if bundled_json and os.path.exists(bundled_json):
+            try_copy(bundled_json, STRUCTURE_JSON)
+            return
+        # 2. Try TEMP folder
+        if os.path.exists(temp_json):
+            try_copy(temp_json, STRUCTURE_JSON)
+            return
+        # 3. Not found
+        raise FileNotFoundError(f"Structure file '{STRUCTURE_JSON}' does not exist and was not found in PyInstaller bundle or TEMP folder. Please provide it.")
     if os.path.getsize(STRUCTURE_JSON) == 0:
-        raise ValueError(f"Structure file '{STRUCTURE_JSON}' is empty. Please fill it with valid JSON structure.")
+        # 1. Try PyInstaller bundle
+        if bundled_json and os.path.exists(bundled_json):
+            try_copy(bundled_json, STRUCTURE_JSON)
+            return
+        # 2. Try TEMP folder
+        if os.path.exists(temp_json):
+            try_copy(temp_json, STRUCTURE_JSON)
+            return
+        # 3. Not found
+        raise ValueError(f"Structure file '{STRUCTURE_JSON}' is empty and was not found in PyInstaller bundle or TEMP folder. Please provide it.")
 
 def load_structure():
     with open(STRUCTURE_JSON, encoding="utf-8") as f:
