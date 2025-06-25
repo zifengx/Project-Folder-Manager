@@ -4,10 +4,10 @@
 2. Open a terminal in this folder.
 
 3. Run:
-   pyinstaller --noconsole --onefile --add-data "structure.json;." main.py
+   pyinstaller --noconsole --onefile --add-data "project_folder_structure.json;." main.py
 
    - '--noconsole' hides the terminal window (for GUI apps).
    - '--onefile' creates a single .exe file.
-   - '--add-data' includes structure.json in the executable.
+   - '--add-data' includes project_folder_structure.json in the executable.
 
 4. The .exe will be in the 'dist' folder.

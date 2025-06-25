@@ -18,10 +18,10 @@ Follow these steps to build a standalone executable for this project on macOS (i
    
    pyinstaller main_mac.spec
 
-5. After the build completes, the standalone executable and the included structure.json will be located in the `dist/main` folder inside your project directory:
+5. After the build completes, the standalone executable and the included project_folder_structure.json will be located in the `dist/main` folder inside your project directory:
    
    dist/main/main
-   dist/main/structure.json
+   dist/main/project_folder_structure.json
 
 6. To run the executable:
    
