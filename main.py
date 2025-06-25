@@ -5,7 +5,7 @@ from tkinter import filedialog, messagebox, scrolledtext
 import json
 
 APP_NAME = "Project Folder Manager"
-VERSION = "1.1.1"
+VERSION = "1.2.1"
 APP_TITLE = f"{APP_NAME} v{VERSION}"
 
 # Use a persistent structure file in the exe/script directory

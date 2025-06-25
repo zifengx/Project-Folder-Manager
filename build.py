@@ -1,5 +1,6 @@
 import re
 import os
+import subprocess
 
 main_py = "main.py"
 spec_files = ["main.spec", "main_mac.spec"]
@@ -58,3 +59,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # Build with PyInstaller after updating version
+    subprocess.run(["pyinstaller", "main.spec"])

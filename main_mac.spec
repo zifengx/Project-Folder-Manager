@@ -23,7 +23,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='Project Folder Manager v1.1.3',
+    name='Project Folder Manager v1.2.1',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -40,5 +40,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='Project Folder Manager v1.1.3'
+    name='Project Folder Manager v1.2.1'
 )
