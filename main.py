@@ -4,6 +4,10 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 import json
 
+APP_NAME = "Project Folder Manager"
+VERSION = "1.1.3"
+APP_TITLE = f"{APP_NAME} v{VERSION}"
+
 # Use a persistent structure file in the exe/script directory
 if getattr(sys, 'frozen', False):
     PROGRAM_ROOT = os.path.dirname(sys.executable)
@@ -42,7 +46,7 @@ def create_project(project_path, structure):
 # --- GUI logic ---
 def run_app():
     root = tk.Tk()
-    root.title("Project Folder Manager")
+    root.title(APP_TITLE)
     try:
         ensure_structure_json()
     except Exception as e:
