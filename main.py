@@ -283,8 +283,10 @@ def run_app():
     except Exception:
         text.insert(tk.END, '{\n    "folders": [],\n    "files": []\n}')
     text.pack(padx=10, pady=5, fill=tk.BOTH, expand=True)
-    tk.Button(json_frame, text="Save", command=save_from_json).pack(pady=10)
-    tk.Button(json_frame, text="Reset", command=reset_to_saved).pack(pady=5)
+    btn_row = tk.Frame(json_frame)
+    tk.Button(btn_row, text="Save", command=save_from_json).pack(side=tk.LEFT, padx=5)
+    tk.Button(btn_row, text="Reset", command=reset_to_saved).pack(side=tk.LEFT, padx=5)
+    btn_row.pack(pady=10)
     notebook.add(visual_frame, text="Visual Editor")
     notebook.add(json_frame, text="Raw JSON")
     notebook.pack(fill=tk.BOTH, expand=True)
