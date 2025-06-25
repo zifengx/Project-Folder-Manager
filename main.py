@@ -4,12 +4,14 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 import json
 
-STRUCTURE_JSON = os.path.join(os.path.dirname(__file__), "structure.json")
-
+# Use a persistent structure file in the exe/script directory
 if getattr(sys, 'frozen', False):
     PROGRAM_ROOT = os.path.dirname(sys.executable)
 else:
     PROGRAM_ROOT = os.path.dirname(os.path.abspath(__file__))
+
+STRUCTURE_FILENAME = "project_folder_structure.json"
+STRUCTURE_JSON = os.path.join(PROGRAM_ROOT, STRUCTURE_FILENAME)
 
 # --- Structure logic ---
 def ensure_structure_json():
