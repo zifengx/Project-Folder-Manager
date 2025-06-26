@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "name": "Project A",
+    "description": "This is a description of Project A.",
+    "status": "active"
+  },
+  {
+    "id": 2,
+    "name": "Project B",
+    "description": "This is a description of Project B.",
+    "status": "active"
+  },
+  {
+    "id": 3,
+    "name": "Project C",
+    "description": "This is a description of Project C.",
+    "status": "depredcated"
+  }
+]

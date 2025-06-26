@@ -74,6 +74,8 @@ def create_project(project_path, structure):
 
 # --- GUI logic ---
 def run_app():
+    import json
+    from tkinter import ttk
     root = tk.Tk()
     root.title(APP_TITLE)
     try:
@@ -83,54 +85,185 @@ def run_app():
         messagebox.showerror("Error", str(e))
         return
 
-    def load_parent_dir():
+    # --- Project List Management ---
+    PROJECT_LISTS_FILE = os.path.join(PROGRAM_ROOT, "project_lists.json")
+    def load_project_list():
+        if os.path.exists(PROJECT_LISTS_FILE):
+            try:
+                with open(PROJECT_LISTS_FILE, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                return []
+        return []
+
+    def save_project_list(projects):
+        with open(PROJECT_LISTS_FILE, "w", encoding="utf-8") as f:
+            json.dump(projects, f, indent=2)
+
+    def get_next_project_id(projects):
+        if not projects:
+            return 1
+        return max(p.get("id", 0) for p in projects) + 1
+
+    # --- Main Area (left) ---
+    main_frame = tk.Frame(root)
+    main_frame.grid(row=0, column=0, sticky="nsew", padx=(10,0), pady=10)
+    main_frame.grid_rowconfigure(1, weight=1)
+    main_frame.grid_columnconfigure(0, weight=1)
+
+    # --- Right Area: Project List (Visual Editor + Raw JSON) ---
+    right_frame = tk.Frame(root, width=480)
+    right_frame.grid(row=0, column=1, rowspan=10, sticky="nswe", padx=(10,10), pady=10)
+    right_frame.grid_propagate(False)
+    proj_labelframe = tk.LabelFrame(right_frame, text="Project List", font=("Arial", 13, "bold"), padx=5, pady=5)
+    proj_labelframe.pack(fill=tk.BOTH, expand=True, padx=0, pady=0)
+    project_notebook = ttk.Notebook(proj_labelframe)
+    # --- Visual Editor Tab ---
+    visual_proj_frame = tk.Frame(project_notebook)
+    proj_tree = ttk.Treeview(visual_proj_frame, columns=("ID", "Name", "Description", "Status"), show="headings")
+    proj_tree.heading("ID", text="ID")
+    proj_tree.heading("Name", text="Name")
+    proj_tree.heading("Description", text="Description")
+    proj_tree.heading("Status", text="Status")
+    proj_tree.column("ID", width=40, anchor="center")
+    proj_tree.column("Name", width=140, anchor="w")
+    proj_tree.column("Description", width=220, anchor="w")
+    proj_tree.column("Status", width=100, anchor="center")
+    proj_tree.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
+
+    def refresh_project_tree():
+        proj_tree.delete(*proj_tree.get_children())
+        for proj in load_project_list():
+            proj_tree.insert("", tk.END, values=(proj.get("id", ""), proj.get("name", ""), proj.get("description", ""), proj.get("status", "")))
+
+    def edit_project_dialog(parent, proj):
+        dialog = tk.Toplevel(parent)
+        dialog.title(f"Edit Project: {proj['name']}")
+        tk.Label(dialog, text="Name:").grid(row=0, column=0, sticky="e", padx=8, pady=4)
+        name_var = tk.StringVar(value=proj["name"])
+        tk.Entry(dialog, textvariable=name_var, width=40).grid(row=0, column=1, padx=8, pady=4)
+        tk.Label(dialog, text="Description:").grid(row=1, column=0, sticky="e", padx=8, pady=4)
+        desc_var = tk.StringVar(value=proj.get("description", ""))
+        tk.Entry(dialog, textvariable=desc_var, width=40).grid(row=1, column=1, padx=8, pady=4)
+        tk.Label(dialog, text="Status:").grid(row=2, column=0, sticky="e", padx=8, pady=4)
+        status_var = tk.StringVar(value=proj.get("status", "active"))
+        status_entry = tk.Entry(dialog, textvariable=status_var, width=20)
+        status_entry.grid(row=2, column=1, padx=8, pady=4, sticky="w")
+        result = {"ok": False}
+        def on_ok():
+            result["ok"] = True
+            dialog.destroy()
+        tk.Button(dialog, text="Save", command=on_ok).grid(row=3, column=0, columnspan=2, pady=10)
+        dialog.transient(parent)
+        dialog.grab_set()
+        dialog.wait_window()
+        if result["ok"]:
+            return {
+                "id": proj["id"],
+                "name": name_var.get().strip(),
+                "description": desc_var.get().strip(),
+                "status": status_var.get().strip()
+            }
+        return None
+
+    def on_edit_project():
+        selected = proj_tree.focus()
+        if not selected:
+            messagebox.showinfo("Edit Project", "Please select a project to edit.")
+            return
+        values = proj_tree.item(selected, "values")
+        if not values:
+            return
+        proj_id = int(values[0])
+        projects = load_project_list()
+        for i, proj in enumerate(projects):
+            if proj["id"] == proj_id:
+                updated = edit_project_dialog(right_frame, proj)
+                if updated:
+                    projects[i] = updated
+                    save_project_list(projects)
+                    refresh_project_tree()
+                    refresh_project_json()
+                break
+
+    btn_proj_frame = tk.Frame(visual_proj_frame)
+    tk.Button(btn_proj_frame, text="Edit Selected", command=on_edit_project).pack(side=tk.LEFT, padx=5)
+
+    def on_remove_project():
+        selected = proj_tree.focus()
+        if not selected:
+            messagebox.showinfo("Remove Project", "Please select a project to remove.")
+            return
+        values = proj_tree.item(selected, "values")
+        if not values:
+            return
+        proj_id = int(values[0])
+        projects = load_project_list()
+        for i, proj in enumerate(projects):
+            if proj["id"] == proj_id:
+                if messagebox.askyesno("Remove Project", f"Are you sure you want to remove project '{proj['name']}'?"):
+                    del projects[i]
+                    save_project_list(projects)
+                    refresh_project_tree()
+                    refresh_project_json()
+                break
+
+    tk.Button(btn_proj_frame, text="Remove Selected", command=on_remove_project).pack(side=tk.LEFT, padx=5)
+    btn_proj_frame.pack(pady=(0,8))
+    visual_proj_frame.pack(fill=tk.BOTH, expand=True)
+
+    # --- Raw JSON Tab ---
+    json_proj_frame = tk.Frame(project_notebook)
+    proj_text = scrolledtext.ScrolledText(json_proj_frame, wrap=tk.WORD, width=60, height=18)
+    proj_text.pack(padx=8, pady=8, fill=tk.BOTH, expand=True)
+
+    def refresh_project_json():
         try:
-            struct = load_structure()
-            return struct.get("parent_directory", PROGRAM_ROOT)
+            with open(PROJECT_LISTS_FILE, "r", encoding="utf-8") as f:
+                proj_text.delete("1.0", tk.END)
+                proj_text.insert(tk.END, f.read())
         except Exception:
-            return PROGRAM_ROOT
+            proj_text.delete("1.0", tk.END)
+            proj_text.insert(tk.END, "[]")
 
-    def save_parent_dir(path):
+    def save_project_json():
         try:
-            struct = load_structure()
-            struct["parent_directory"] = path
-            with open(STRUCTURE_JSON, "w", encoding="utf-8") as f:
-                json.dump(struct, f, indent=2)
+            new_json = proj_text.get("1.0", tk.END)
+            parsed = json.loads(new_json)
+            save_project_list(parsed)
+            refresh_project_tree()
+            messagebox.showinfo("Saved", "Project list saved successfully.")
         except Exception as e:
-            print(f"Warning: Could not save parent directory: {e}")
+            messagebox.showerror("Error", f"Invalid JSON: {e}")
 
-    def create_project_gui():
-        parent_dir = load_parent_dir().strip()
-        project_name = project_name_var.get().strip()
-        notice_var.set("")
-        if not parent_dir:
-            parent_dir = PROGRAM_ROOT
-        if not project_name:
-            messagebox.showerror("Error", "Project name cannot be empty.")
-            return
-        project_path = os.path.join(parent_dir, project_name)
-        if os.path.exists(project_path):
-            messagebox.showerror("Error", f"Project '{project_name}' already exists.")
-            return
-        structure = load_structure()
-        try:
-            create_project(project_path, structure)
-        except Exception as e:
-            messagebox.showerror("Error", str(e))
-            return
-        notice_var.set(f"Project '{project_name}' Created!")
+    btn_json_proj = tk.Frame(json_proj_frame)
+    tk.Button(btn_json_proj, text="Save", command=save_project_json).pack(side=tk.LEFT, padx=5)
+    btn_json_proj.pack(pady=(0,8))
+    json_proj_frame.pack(fill=tk.BOTH, expand=True)
+
+    project_notebook.add(visual_proj_frame, text="Visual Editor")
+    project_notebook.add(json_proj_frame, text="Raw JSON")
+    project_notebook.pack(fill=tk.BOTH, expand=True)
+
+    def refresh_projects_all():
+        refresh_project_tree()
+        refresh_project_json()
+    refresh_projects_all()
 
     # --- Config/Structure Editor Panel (in main window) ---
-    from tkinter import ttk
+
+    # --- Structure Editor Helper Functions ---
     def load_structure_json():
         try:
             with open(STRUCTURE_JSON, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
             return {"folders": [], "files": []}
+
     def save_structure_json(struct):
         with open(STRUCTURE_JSON, "w", encoding="utf-8") as f:
             json.dump(struct, f, indent=4)
+
     def refresh_tree():
         tree.delete(*tree.get_children())
         def insert_items(parent, items, is_folder):
@@ -142,6 +275,79 @@ def run_app():
         struct = load_structure_json()
         insert_items("", struct.get("folders", []), True)
         insert_items("", struct.get("files", []), False)
+
+    def add_folder():
+        selected = tree.focus()
+        name = simple_input_dialog(root, "Enter folder name:")
+        if not name:
+            return
+        struct = load_structure_json()
+        def add_to(items):
+            items.append({"name": name, "folders": []})
+        if not selected:
+            add_to(struct["folders"])
+        else:
+            def find_and_add(items, node):
+                for item in items:
+                    if item["name"] == tree.item(node, "text"):
+                        if "folders" not in item:
+                            item["folders"] = []
+                        add_to(item["folders"])
+                        return True
+                    if "folders" in item and find_and_add(item["folders"], node):
+                        return True
+                return False
+            find_and_add(struct["folders"], selected)
+        save_structure_json(struct)
+        refresh_tree()
+
+    def add_file():
+        name = simple_input_dialog(root, "Enter file name (with extension):")
+        if not name:
+            return
+        struct = load_structure_json()
+        struct["files"].append({"name": name})
+        save_structure_json(struct)
+        refresh_tree()
+
+    def remove_item():
+        selected = tree.focus()
+        if not selected:
+            return
+        name = tree.item(selected, "text")
+        kind = tree.item(selected, "values")[0]
+        struct = load_structure_json()
+        if kind == "Folder":
+            def remove_from(items):
+                for i, item in enumerate(items):
+                    if item["name"] == name:
+                        del items[i]
+                        return True
+                    if "folders" in item and remove_from(item["folders"]):
+                        return True
+                return False
+            remove_from(struct["folders"])
+        else:
+            struct["files"] = [f for f in struct["files"] if f["name"] != name]
+        save_structure_json(struct)
+        refresh_tree()
+
+    def reset_to_saved():
+        refresh_tree()
+        text.delete("1.0", tk.END)
+        with open(STRUCTURE_JSON, "r", encoding="utf-8") as f:
+            text.insert(tk.END, f.read())
+
+    def save_from_json():
+        try:
+            new_json = text.get("1.0", tk.END)
+            parsed = json.loads(new_json)
+            save_structure_json(parsed)
+            messagebox.showinfo("Saved", "Structure saved successfully.")
+            refresh_tree()
+        except Exception as e:
+            messagebox.showerror("Error", f"Invalid JSON: {e}")
+
     def simple_input_dialog(parent, prompt):
         dialog = tk.Toplevel(parent)
         dialog.title("Input")
@@ -165,112 +371,13 @@ def run_app():
         dialog.geometry(f"{width}x{height}+{x}+{y}")
         parent.wait_window(dialog)
         return result["value"]
-    def name_comment_dialog(parent, title, name_label, comment_label):
-        dialog = tk.Toplevel(parent)
-        dialog.title(title)
-        tk.Label(dialog, text=name_label).pack(padx=10, pady=(10, 2), anchor="w")
-        name_entry = tk.Entry(dialog, width=50)
-        name_entry.pack(padx=10, pady=(0, 8))
-        tk.Label(dialog, text=comment_label).pack(padx=10, pady=(0, 2), anchor="w")
-        comment_entry = tk.Entry(dialog, width=50)
-        comment_entry.pack(padx=10, pady=(0, 10))
-        name_entry.focus_set()
-        result = {"name": None, "comment": None}
-        def on_ok():
-            result["name"] = name_entry.get()
-            result["comment"] = comment_entry.get()
-            dialog.destroy()
-        tk.Button(dialog, text="OK", command=on_ok).pack(pady=(0, 10))
-        dialog.transient(parent)
-        dialog.grab_set()
-        dialog.update_idletasks()
-        width, height = 400, 200
-        screen_width = dialog.winfo_screenwidth()
-        screen_height = dialog.winfo_screenheight()
-        x = (screen_width // 2) - (width // 2)
-        y = (screen_height // 2) - (height // 2)
-        dialog.geometry(f"{width}x{height}+{x}+{y}")
-        parent.wait_window(dialog)
-        return result["name"], result["comment"]
-    def add_folder():
-        selected = tree.focus()
-        name, comment = name_comment_dialog(root, "Add Folder", "Folder name:", "Comment (optional):")
-        if not name:
-            return
-        struct = load_structure_json()
-        def add_to(items):
-            folder = {"name": name, "folders": []}
-            if comment:
-                folder["comment"] = comment
-            items.append(folder)
-        if not selected:
-            add_to(struct["folders"])
-        else:
-            def find_and_add(items, node):
-                for item in items:
-                    if item["name"] == tree.item(node, "text"):
-                        if "folders" not in item:
-                            item["folders"] = []
-                        add_to(item["folders"])
-                        return True
-                    if "folders" in item and find_and_add(item["folders"], node):
-                        return True
-                return False
-            find_and_add(struct["folders"], selected)
-        save_structure_json(struct)
-        refresh_tree()
-    def add_file():
-        name, comment = name_comment_dialog(root, "Add File", "File name (with suffix):", "Comment (optional):")
-        if not name:
-            return
-        struct = load_structure_json()
-        file_obj = {"name": name}
-        if comment:
-            file_obj["comment"] = comment
-        struct["files"].append(file_obj)
-        save_structure_json(struct)
-        refresh_tree()
-    def remove_item():
-        selected = tree.focus()
-        if not selected:
-            return
-        name = tree.item(selected, "text")
-        kind = tree.item(selected, "values")[0]
-        struct = load_structure_json()
-        if kind == "Folder":
-            def remove_from(items):
-                for i, item in enumerate(items):
-                    if item["name"] == name:
-                        del items[i]
-                        return True
-                    if "folders" in item and remove_from(item["folders"]):
-                        return True
-                return False
-            remove_from(struct["folders"])
-        else:
-            struct["files"] = [f for f in struct["files"] if f["name"] != name]
-        save_structure_json(struct)
-        refresh_tree()
-    def reset_to_saved():
-        refresh_tree()
-        text.delete("1.0", tk.END)
-        with open(STRUCTURE_JSON, "r", encoding="utf-8") as f:
-            text.insert(tk.END, f.read())
-    def save_from_json():
-        try:
-            new_json = text.get("1.0", tk.END)
-            parsed = json.loads(new_json)
-            save_structure_json(parsed)
-            messagebox.showinfo("Saved", "Structure saved successfully.")
-            refresh_tree()
-        except Exception as e:
-            messagebox.showerror("Error", f"Invalid JSON: {e}")
-    config_frame = tk.LabelFrame(root, text="Config", padx=5, pady=5)
+
+    config_frame = tk.LabelFrame(main_frame, text="Config", padx=5, pady=5)
     config_frame.grid(row=3, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
     config_frame.columnconfigure(0, weight=1)
     config_frame.rowconfigure(0, weight=1)
     pd_frame = tk.Frame(config_frame)
-    struct = load_structure_json()
+    struct = load_structure()
     pd_value = struct.get("parent_directory", "").strip() or PROGRAM_ROOT
     pd_var = tk.StringVar(value=pd_value)
     pd_label = tk.Label(pd_frame, text="Parent Directory:")
@@ -282,9 +389,10 @@ def run_app():
         if selected:
             pd_var.set(selected)
             try:
-                struct = load_structure_json()
+                struct = load_structure()
                 struct["parent_directory"] = selected
-                save_structure_json(struct)
+                with open(STRUCTURE_JSON, "w", encoding="utf-8") as f:
+                    json.dump(struct, f, indent=2)
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to save parent directory: {e}")
     tk.Button(pd_frame, text="Browse...", command=browse_parent_dir).pack(side=tk.LEFT)
@@ -324,30 +432,81 @@ def run_app():
     notebook.add(json_frame, text="Raw JSON")
     notebook.pack(fill=tk.BOTH, expand=True)
     refresh_tree()
-    config_frame.grid(row=1, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
-    root.grid_rowconfigure(1, weight=1)
-    for col in range(4):
-        root.grid_columnconfigure(col, weight=1)
-    config_frame.grid_propagate(True)
-    config_frame.pack_propagate(True)
-    config_frame.rowconfigure(1, weight=1)
-    config_frame.columnconfigure(0, weight=1)
-    notebook.pack(fill=tk.BOTH, expand=True)
-    def center_window(win, width=800, height=600):
+
+    def load_parent_dir():
+        try:
+            struct = load_structure()
+            return struct.get("parent_directory", PROGRAM_ROOT)
+        except Exception:
+            return PROGRAM_ROOT
+
+    def save_parent_dir(path):
+        try:
+            struct = load_structure()
+            struct["parent_directory"] = path
+            with open(STRUCTURE_JSON, "w", encoding="utf-8") as f:
+                json.dump(struct, f, indent=2)
+        except Exception as e:
+            print(f"Warning: Could not save parent directory: {e}")
+
+    def create_project_gui():
+        parent_dir = load_parent_dir().strip()
+        project_name = project_name_var.get().strip()
+        notice_var.set("")
+        if not parent_dir:
+            parent_dir = PROGRAM_ROOT
+        if not project_name:
+            messagebox.showerror("Error", "Project name cannot be empty.")
+            return
+        project_path = os.path.join(parent_dir, project_name)
+        if os.path.exists(project_path):
+            messagebox.showerror("Error", f"Project '{project_name}' already exists.")
+            return
+        structure = load_structure()
+        try:
+            create_project(project_path, structure)
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+            return
+        # Save project info to project_lists.json (new structure)
+        projects = load_project_list()
+        if not any(p["name"] == project_name for p in projects):
+            new_proj = {
+                "id": get_next_project_id(projects),
+                "name": project_name,
+                "description": f"This is a description of {project_name}.",
+                "status": "active"
+            }
+            projects.append(new_proj)
+            save_project_list(projects)
+            refresh_projects_all()
+        notice_var.set(f"Project '{project_name}' Created!")
+
+    project_name_var = tk.StringVar()
+    tk.Label(main_frame, text="Project Name:").grid(row=0, column=0, padx=(10,0), pady=10, sticky="w")
+    tk.Entry(main_frame, textvariable=project_name_var, width=60).grid(row=0, column=1, padx=(0,0), pady=10, sticky="w")
+    tk.Button(main_frame, text="Create Project", command=create_project_gui).grid(row=0, column=2, padx=(4,0), pady=10, sticky="w")
+    notice_var = tk.StringVar(value=" ")
+    notice_label = tk.Label(main_frame, textvariable=notice_var, fg="green", width=24, anchor="w")
+    notice_label.grid(row=0, column=3, padx=(10,10), pady=10, sticky="w")
+    def center_window(win, width=1400, height=540):
         win.update_idletasks()
         screen_width = win.winfo_screenwidth()
         screen_height = win.winfo_screenheight()
         x = (screen_width // 2) - (width // 2)
         y = (screen_height // 2) - (height // 2)
         win.geometry(f"{width}x{height}+{x}+{y}")
-    tk.Label(root, text="Project Name:").grid(row=0, column=0, padx=(10,0), pady=10, sticky="w")
-    project_name_var = tk.StringVar()
-    tk.Entry(root, textvariable=project_name_var, width=40).grid(row=0, column=1, padx=(0,0), pady=10, sticky="w")
-    tk.Button(root, text="Create Project", command=create_project_gui).grid(row=0, column=2, padx=(4,0), pady=10, sticky="w")
-    notice_var = tk.StringVar(value=" ")
-    notice_label = tk.Label(root, textvariable=notice_var, fg="green", width=24, anchor="w")
-    notice_label.grid(row=0, column=3, padx=(10,10), pady=10, sticky="w")
     center_window(root)
+    root.grid_rowconfigure(0, weight=1)
+    root.grid_columnconfigure(0, weight=1)
+    root.grid_columnconfigure(1, weight=0)
+
+    # Reduce vertical space between Project Name and Config area
+    main_frame.grid_rowconfigure(1, minsize=10)
+    config_frame.grid(row=1, column=0, columnspan=4, padx=10, pady=(0,10), sticky="nsew")
+    # Remove extra row=3 config_frame grid if present
+    # (the config_frame.grid call in the original code with row=3 is now replaced above)
+
     root.mainloop()
 
 if __name__ == "__main__":
