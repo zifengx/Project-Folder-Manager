@@ -78,6 +78,11 @@ def run_app():
     from tkinter import ttk
     root = tk.Tk()
     root.title(APP_TITLE)
+    # Set fixed window size and disable resizing
+    fixed_width = 1400
+    fixed_height = 540
+    root.geometry(f"{fixed_width}x{fixed_height}")
+    root.resizable(False, False)
     try:
         ensure_structure_json()
     except Exception as e:
