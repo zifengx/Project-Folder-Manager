@@ -1,14 +1,13 @@
-1. Install PyInstaller if you haven't:
+1. Open a terminal in this folder.
+
+2. Install PyInstaller if you haven't:
    pip install pyinstaller
 
-2. Open a terminal in this folder.
-
 3. Run:
-   py update_version.py 
+   py build.py 
    
-   Update the version first
+   or Run:
 
-4. Run:
    pyinstaller --noconsole --onefile --add-data "project_folder_structure.json;." main.py
 
    - '--noconsole' hides the terminal window (for GUI apps).
@@ -19,4 +18,4 @@
 
    pyinstaller main.spec
 
-5. The .exe will be in the 'dist' folder.
+4. The .exe will be in the 'dist' folder.

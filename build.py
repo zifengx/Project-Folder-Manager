@@ -48,7 +48,7 @@ def main():
         return
     print(f"Current app name: {app_name}")
     print(f"Current version: {current_version}")
-    new_version = input("Enter new version number (e.g. 1.2.0): ").strip()
+    new_version = input("Enter new version number: ").strip()
     if not new_version:
         print("No version entered. Aborting.")
         return
