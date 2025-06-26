@@ -5,7 +5,7 @@ from tkinter import filedialog, messagebox, scrolledtext
 import json
 
 APP_NAME = "Project Folder Manager"
-VERSION = "1.2.1"
+VERSION = "2.0.1"
 APP_TITLE = f"{APP_NAME} v{VERSION}"
 
 # Use a persistent structure file in the exe/script directory
@@ -92,7 +92,24 @@ def run_app():
 
     # --- Project List Management ---
     PROJECT_LISTS_FILE = os.path.join(PROGRAM_ROOT, "project_lists.json")
+    DEFAULT_PROJECT_LISTS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "project_lists.json")
+
     def load_project_list():
+        # If not found in PROGRAM_ROOT, try to copy from bundled or default location
+        if not os.path.exists(PROJECT_LISTS_FILE):
+            # If running as frozen, try to copy from the bundled location
+            try:
+                if getattr(sys, 'frozen', False):
+                    import shutil
+                    src = os.path.join(sys._MEIPASS, "project_lists.json")
+                    if os.path.exists(src):
+                        shutil.copyfile(src, PROJECT_LISTS_FILE)
+                # If not frozen or not found, try to copy from script dir
+                elif os.path.exists(DEFAULT_PROJECT_LISTS_FILE):
+                    import shutil
+                    shutil.copyfile(DEFAULT_PROJECT_LISTS_FILE, PROJECT_LISTS_FILE)
+            except Exception:
+                pass
         if os.path.exists(PROJECT_LISTS_FILE):
             try:
                 with open(PROJECT_LISTS_FILE, "r", encoding="utf-8") as f:
