@@ -115,7 +115,7 @@ def run_app():
     right_frame = tk.Frame(root, width=480)
     right_frame.grid(row=0, column=1, rowspan=10, sticky="nswe", padx=(10,10), pady=10)
     right_frame.grid_propagate(False)
-    proj_labelframe = tk.LabelFrame(right_frame, text="Project List", font=("Arial", 13, "bold"), padx=5, pady=5)
+    proj_labelframe = tk.LabelFrame(right_frame, text="Project List", padx=5, pady=5)
     proj_labelframe.pack(fill=tk.BOTH, expand=True, padx=0, pady=0)
     project_notebook = ttk.Notebook(proj_labelframe)
     # --- Visual Editor Tab ---
@@ -147,8 +147,9 @@ def run_app():
         tk.Entry(dialog, textvariable=desc_var, width=40).grid(row=1, column=1, padx=8, pady=4)
         tk.Label(dialog, text="Status:").grid(row=2, column=0, sticky="e", padx=8, pady=4)
         status_var = tk.StringVar(value=proj.get("status", "active"))
-        status_entry = tk.Entry(dialog, textvariable=status_var, width=20)
-        status_entry.grid(row=2, column=1, padx=8, pady=4, sticky="w")
+        status_options = ["active", "depredcated"]
+        status_menu = ttk.Combobox(dialog, textvariable=status_var, values=status_options, state="readonly", width=18)
+        status_menu.grid(row=2, column=1, padx=8, pady=4, sticky="w")
         result = {"ok": False}
         def on_ok():
             result["ok"] = True
@@ -156,6 +157,17 @@ def run_app():
         tk.Button(dialog, text="Save", command=on_ok).grid(row=3, column=0, columnspan=2, pady=10)
         dialog.transient(parent)
         dialog.grab_set()
+        # Center the dialog on the parent window
+        dialog.update_idletasks()
+        parent_x = parent.winfo_rootx()
+        parent_y = parent.winfo_rooty()
+        parent_w = parent.winfo_width()
+        parent_h = parent.winfo_height()
+        dialog_w = dialog.winfo_width()
+        dialog_h = dialog.winfo_height()
+        x = parent_x + (parent_w // 2) - (dialog_w // 2)
+        y = parent_y + (parent_h // 2) - (dialog_h // 2)
+        dialog.geometry(f"+{x}+{y}")
         dialog.wait_window()
         if result["ok"]:
             return {
@@ -201,7 +213,34 @@ def run_app():
         projects = load_project_list()
         for i, proj in enumerate(projects):
             if proj["id"] == proj_id:
-                if messagebox.askyesno("Remove Project", f"Are you sure you want to remove project '{proj['name']}'?"):
+                # Custom confirmation dialog centered over parent
+                dialog = tk.Toplevel(right_frame)
+                dialog.title("Remove Project")
+                tk.Label(dialog, text=f"Are you sure you want to remove project '{proj['name']}'?").pack(padx=18, pady=16)
+                result = {"ok": False}
+                def on_yes():
+                    result["ok"] = True
+                    dialog.destroy()
+                def on_no():
+                    dialog.destroy()
+                btns = tk.Frame(dialog)
+                tk.Button(btns, text="Yes", command=on_yes, width=10).pack(side=tk.LEFT, padx=8)
+                tk.Button(btns, text="No", command=on_no, width=10).pack(side=tk.LEFT, padx=8)
+                btns.pack(pady=(0,12))
+                dialog.transient(right_frame)
+                dialog.grab_set()
+                dialog.update_idletasks()
+                parent_x = right_frame.winfo_rootx()
+                parent_y = right_frame.winfo_rooty()
+                parent_w = right_frame.winfo_width()
+                parent_h = right_frame.winfo_height()
+                dialog_w = dialog.winfo_width()
+                dialog_h = dialog.winfo_height()
+                x = parent_x + (parent_w // 2) - (dialog_w // 2)
+                y = parent_y + (parent_h // 2) - (dialog_h // 2)
+                dialog.geometry(f"+{x}+{y}")
+                dialog.wait_window()
+                if result["ok"]:
                     del projects[i]
                     save_project_list(projects)
                     refresh_project_tree()
