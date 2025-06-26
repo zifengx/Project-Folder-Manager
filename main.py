@@ -134,7 +134,12 @@ def run_app():
     def refresh_project_tree():
         proj_tree.delete(*proj_tree.get_children())
         for proj in load_project_list():
-            proj_tree.insert("", tk.END, values=(proj.get("id", ""), proj.get("name", ""), proj.get("description", ""), proj.get("status", "")))
+            values = (proj.get("id", ""), proj.get("name", ""), proj.get("description", ""), proj.get("status", ""))
+            if proj.get("status", "") == "depredcated":
+                proj_tree.insert("", tk.END, values=values, tags=("deprecated",))
+            else:
+                proj_tree.insert("", tk.END, values=values)
+        proj_tree.tag_configure("deprecated", foreground="#888888", font=("Arial", 10, "overstrike"))
 
     def edit_project_dialog(parent, proj):
         dialog = tk.Toplevel(parent)
