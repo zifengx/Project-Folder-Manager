@@ -346,12 +346,47 @@ def run_app():
 
     def add_folder():
         selected = tree.focus()
-        name = simple_input_dialog(root, "Enter folder name:")
-        if not name:
+        # Custom dialog for name and comment
+        dialog = tk.Toplevel(root)
+        dialog.title("Add Folder")
+        tk.Label(dialog, text="Folder Name:").grid(row=0, column=0, padx=10, pady=6, sticky="e")
+        name_var = tk.StringVar()
+        tk.Entry(dialog, textvariable=name_var, width=40).grid(row=0, column=1, padx=10, pady=6)
+        tk.Label(dialog, text="Comment:").grid(row=1, column=0, padx=10, pady=6, sticky="e")
+        comment_var = tk.StringVar()
+        tk.Entry(dialog, textvariable=comment_var, width=40).grid(row=1, column=1, padx=10, pady=6)
+        result = {"ok": False}
+        def on_ok():
+            if not name_var.get().strip():
+                messagebox.showerror("Error", "Folder name cannot be empty.", parent=dialog)
+                return
+            result["ok"] = True
+            dialog.destroy()
+        tk.Button(dialog, text="Add", command=on_ok).grid(row=2, column=0, columnspan=2, pady=10)
+        dialog.transient(root)
+        dialog.grab_set()
+        dialog.update_idletasks()
+        # Center the dialog in the Config area
+        parent_x = config_frame.winfo_rootx()
+        parent_y = config_frame.winfo_rooty()
+        parent_w = config_frame.winfo_width()
+        parent_h = config_frame.winfo_height()
+        dialog_w = dialog.winfo_width()
+        dialog_h = dialog.winfo_height()
+        x = parent_x + (parent_w // 2) - (dialog_w // 2)
+        y = parent_y + (parent_h // 2) - (dialog_h // 2)
+        dialog.geometry(f"+{x}+{y}")
+        root.wait_window(dialog)
+        name = name_var.get().strip()
+        comment = comment_var.get().strip()
+        if not result["ok"] or not name:
             return
         struct = load_structure_json()
         def add_to(items):
-            items.append({"name": name, "folders": []})
+            folder = {"name": name, "folders": []}
+            if comment:
+                folder["comment"] = comment
+            items.append(folder)
         if not selected:
             add_to(struct["folders"])
         else:
@@ -370,11 +405,46 @@ def run_app():
         refresh_tree()
 
     def add_file():
-        name = simple_input_dialog(root, "Enter file name (with extension):")
-        if not name:
+        # Custom dialog for name and comment
+        dialog = tk.Toplevel(root)
+        dialog.title("Add File")
+        tk.Label(dialog, text="File Name (with extension):").grid(row=0, column=0, padx=10, pady=6, sticky="e")
+        name_var = tk.StringVar()
+        tk.Entry(dialog, textvariable=name_var, width=40).grid(row=0, column=1, padx=10, pady=6)
+        tk.Label(dialog, text="Comment:").grid(row=1, column=0, padx=10, pady=6, sticky="e")
+        comment_var = tk.StringVar()
+        tk.Entry(dialog, textvariable=comment_var, width=40).grid(row=1, column=1, padx=10, pady=6)
+        result = {"ok": False}
+        def on_ok():
+            if not name_var.get().strip():
+                messagebox.showerror("Error", "File name cannot be empty.", parent=dialog)
+                return
+            result["ok"] = True
+            dialog.destroy()
+        tk.Button(dialog, text="Add", command=on_ok).grid(row=2, column=0, columnspan=2, pady=10)
+        dialog.transient(root)
+        dialog.grab_set()
+        dialog.update_idletasks()
+        # Center the dialog in the Config area
+        parent_x = config_frame.winfo_rootx()
+        parent_y = config_frame.winfo_rooty()
+        parent_w = config_frame.winfo_width()
+        parent_h = config_frame.winfo_height()
+        dialog_w = dialog.winfo_width()
+        dialog_h = dialog.winfo_height()
+        x = parent_x + (parent_w // 2) - (dialog_w // 2)
+        y = parent_y + (parent_h // 2) - (dialog_h // 2)
+        dialog.geometry(f"+{x}+{y}")
+        root.wait_window(dialog)
+        name = name_var.get().strip()
+        comment = comment_var.get().strip()
+        if not result["ok"] or not name:
             return
         struct = load_structure_json()
-        struct["files"].append({"name": name})
+        file_item = {"name": name}
+        if comment:
+            file_item["comment"] = comment
+        struct["files"].append(file_item)
         save_structure_json(struct)
         refresh_tree()
 
