@@ -408,15 +408,29 @@ def run_app():
         # Custom dialog for name and comment
         dialog = tk.Toplevel(root)
         dialog.title("Add File")
-        tk.Label(dialog, text="File Name (with extension):").grid(row=0, column=0, padx=10, pady=6, sticky="e")
+        tk.Label(dialog, text="File Name:").grid(row=0, column=0, padx=10, pady=6, sticky="e")
         name_var = tk.StringVar()
-        tk.Entry(dialog, textvariable=name_var, width=40).grid(row=0, column=1, padx=10, pady=6)
+        name_entry = tk.Entry(dialog, textvariable=name_var, width=40)
+        name_entry.grid(row=0, column=1, padx=10, pady=6)
+        # Set placeholder text for file extension
+        def set_placeholder(event=None):
+            if not name_var.get():
+                name_entry.insert(0, "with extension")
+                name_entry.config(fg="#888888")
+        def clear_placeholder(event=None):
+            if name_entry.get() == "with extension":
+                name_entry.delete(0, tk.END)
+                name_entry.config(fg="#000000")
+        name_entry.bind("<FocusIn>", clear_placeholder)
+        name_entry.bind("<FocusOut>", set_placeholder)
+        set_placeholder()
         tk.Label(dialog, text="Comment:").grid(row=1, column=0, padx=10, pady=6, sticky="e")
         comment_var = tk.StringVar()
         tk.Entry(dialog, textvariable=comment_var, width=40).grid(row=1, column=1, padx=10, pady=6)
         result = {"ok": False}
         def on_ok():
-            if not name_var.get().strip():
+            value = name_var.get().strip()
+            if value == "with extension" or not value:
                 messagebox.showerror("Error", "File name cannot be empty.", parent=dialog)
                 return
             result["ok"] = True
@@ -438,7 +452,7 @@ def run_app():
         root.wait_window(dialog)
         name = name_var.get().strip()
         comment = comment_var.get().strip()
-        if not result["ok"] or not name:
+        if not result["ok"] or not name or name == "with extension":
             return
         struct = load_structure_json()
         file_item = {"name": name}
@@ -694,7 +708,7 @@ def run_app():
             new_proj = {
                 "id": get_next_project_id(projects),
                 "name": project_name,
-                "description": f"This is a description of {project_name}.",
+                "description": "",
                 "status": "active"
             }
             projects.append(new_proj)
