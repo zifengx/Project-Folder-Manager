@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='Project Folder Manager v2.0.1',
+    name='Project Folder Manager v2.1.0',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
