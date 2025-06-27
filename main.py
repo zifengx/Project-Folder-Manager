@@ -3,6 +3,7 @@ import os
 import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 import json
+import datetime
 
 APP_NAME = "Project Folder Manager"
 VERSION = "2.1.0"
@@ -134,7 +135,7 @@ def run_app():
     main_frame.grid_columnconfigure(0, weight=1)
 
     # --- Right Area: Project List (Visual Editor + Raw JSON) ---
-    right_frame = tk.Frame(root, width=480)
+    right_frame = tk.Frame(root, width=600)  # Increased width for new column
     right_frame.grid(row=0, column=1, rowspan=10, sticky="nswe", padx=(10,10), pady=10)
     right_frame.grid_propagate(False)
     proj_labelframe = tk.LabelFrame(right_frame, text="Project List", padx=5, pady=5)
@@ -142,15 +143,17 @@ def run_app():
     project_notebook = ttk.Notebook(proj_labelframe)
     # --- Visual Editor Tab ---
     visual_proj_frame = tk.Frame(project_notebook)
-    proj_tree = ttk.Treeview(visual_proj_frame, columns=("ID", "Name", "Description", "Status"), show="headings")
+    proj_tree = ttk.Treeview(visual_proj_frame, columns=("ID", "Name", "Description", "Status", "Start Date"), show="headings")
     proj_tree.heading("ID", text="ID")
     proj_tree.heading("Name", text="Name")
     proj_tree.heading("Description", text="Description")
     proj_tree.heading("Status", text="Status")
+    proj_tree.heading("Start Date", text="Start Date")
     proj_tree.column("ID", width=40, anchor="center")
     proj_tree.column("Name", width=140, anchor="w")
     proj_tree.column("Description", width=220, anchor="w")
     proj_tree.column("Status", width=100, anchor="center")
+    proj_tree.column("Start Date", width=100, anchor="center")
     proj_tree.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
 
     def refresh_project_tree():
@@ -158,7 +161,13 @@ def run_app():
         # Sort projects in descending order by ID
         projects = sorted(load_project_list(), key=lambda p: p.get("id", 0), reverse=True)
         for proj in projects:
-            values = (proj.get("id", ""), proj.get("name", ""), proj.get("description", ""), proj.get("status", ""))
+            values = (
+                proj.get("id", ""),
+                proj.get("name", ""),
+                proj.get("description", ""),
+                proj.get("status", ""),
+                proj.get("start_date", "")
+            )
             if proj.get("status", "") == "deprecated":
                 proj_tree.insert("", tk.END, values=values, tags=("deprecated",))
             else:
@@ -179,11 +188,21 @@ def run_app():
         status_options = ["active", "deprecated"]
         status_menu = ttk.Combobox(dialog, textvariable=status_var, values=status_options, state="readonly", width=18)
         status_menu.grid(row=2, column=1, padx=8, pady=4, sticky="w")
+        # Start Date (readonly)
+        tk.Label(dialog, text="Start Date:").grid(row=3, column=0, sticky="e", padx=8, pady=4)
+        start_date_var = tk.StringVar(value=proj.get("start_date", ""))
+        start_date_entry = tk.Entry(dialog, textvariable=start_date_var, width=20, state="readonly")
+        start_date_entry.grid(row=3, column=1, padx=8, pady=4, sticky="w")
+        # End Date (readonly, only set if deprecated)
+        tk.Label(dialog, text="End Date:").grid(row=4, column=0, sticky="e", padx=8, pady=4)
+        end_date_var = tk.StringVar(value=proj.get("end_date", ""))
+        end_date_entry = tk.Entry(dialog, textvariable=end_date_var, width=20, state="readonly")
+        end_date_entry.grid(row=4, column=1, padx=8, pady=4, sticky="w")
         result = {"ok": False}
         def on_ok():
             result["ok"] = True
             dialog.destroy()
-        tk.Button(dialog, text="Save", command=on_ok).grid(row=3, column=0, columnspan=2, pady=10)
+        tk.Button(dialog, text="Save", command=on_ok).grid(row=5, column=0, columnspan=2, pady=10)
         dialog.transient(parent)
         dialog.grab_set()
         # Center the dialog on the parent window
@@ -199,11 +218,21 @@ def run_app():
         dialog.geometry(f"+{x}+{y}")
         dialog.wait_window()
         if result["ok"]:
+            new_status = status_var.get().strip()
+            new_end_date = end_date_var.get().strip()
+            # If status changed to deprecated and end_date not set, set it
+            if proj.get("status", "active") != "deprecated" and new_status == "deprecated":
+                new_end_date = datetime.date.today().isoformat()
+            # If status changed from deprecated to active, clear end_date
+            if proj.get("status", "active") == "deprecated" and new_status != "deprecated":
+                new_end_date = ""
             return {
                 "id": proj["id"],
                 "name": name_var.get().strip(),
                 "description": desc_var.get().strip(),
-                "status": status_var.get().strip()
+                "status": new_status,
+                "start_date": start_date_var.get().strip(),
+                "end_date": new_end_date
             }
         return None
 
@@ -705,11 +734,14 @@ def run_app():
         # Save project info to project_lists.json (new structure)
         projects = load_project_list()
         if not any(p["name"] == project_name for p in projects):
+            today = datetime.date.today().isoformat()
             new_proj = {
                 "id": get_next_project_id(projects),
                 "name": project_name,
                 "description": "",
-                "status": "active"
+                "status": "active",
+                "start_date": today,
+                "end_date": ""
             }
             projects.append(new_proj)
             save_project_list(projects)
