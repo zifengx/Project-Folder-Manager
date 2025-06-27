@@ -655,6 +655,26 @@ def run_app():
     # Remove extra row=3 config_frame grid if present
     # (the config_frame.grid call in the original code with row=3 is now replaced above)
 
+    def on_proj_tree_double_click(event):
+        selected = proj_tree.focus()
+        if not selected:
+            return
+        values = proj_tree.item(selected, "values")
+        if not values:
+            return
+        proj_id = int(values[0])
+        projects = load_project_list()
+        for i, proj in enumerate(projects):
+            if proj["id"] == proj_id:
+                updated = edit_project_dialog(right_frame, proj)
+                if updated:
+                    projects[i] = updated
+                    save_project_list(projects)
+                    refresh_project_tree()
+                    refresh_project_json()
+                break
+    proj_tree.bind("<Double-1>", on_proj_tree_double_click)
+
     root.mainloop()
 
 if __name__ == "__main__":
