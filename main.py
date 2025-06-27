@@ -631,6 +631,7 @@ def run_app():
             save_project_list(projects)
             refresh_projects_all()
         notice_var.set(f"Project '{project_name}' Created!")
+        project_name_var.set("")  # Clear the input after creation
 
     project_name_var = tk.StringVar()
     tk.Label(main_frame, text="Project Name:").grid(row=0, column=0, padx=(10,0), pady=10, sticky="w")
