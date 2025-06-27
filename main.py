@@ -6,7 +6,7 @@ import json
 import datetime
 
 APP_NAME = "Project Folder Manager"
-VERSION = "2.1.0"
+VERSION = "2.1.1"
 APP_TITLE = f"{APP_NAME} v{VERSION}"
 
 # Use a persistent structure file in the exe/script directory
