@@ -155,7 +155,9 @@ def run_app():
 
     def refresh_project_tree():
         proj_tree.delete(*proj_tree.get_children())
-        for proj in load_project_list():
+        # Sort projects in descending order by ID
+        projects = sorted(load_project_list(), key=lambda p: p.get("id", 0), reverse=True)
+        for proj in projects:
             values = (proj.get("id", ""), proj.get("name", ""), proj.get("description", ""), proj.get("status", ""))
             if proj.get("status", "") == "depredcated":
                 proj_tree.insert("", tk.END, values=values, tags=("deprecated",))
