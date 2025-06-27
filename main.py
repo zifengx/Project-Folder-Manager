@@ -80,7 +80,7 @@ def run_app():
     root.title(APP_TITLE)
     # Set fixed window size and disable resizing
     fixed_width = 1400
-    fixed_height = 540
+    fixed_height = 640
     root.geometry(f"{fixed_width}x{fixed_height}")
     root.resizable(False, False)
     try:
@@ -555,7 +555,7 @@ def run_app():
     notice_var = tk.StringVar(value=" ")
     notice_label = tk.Label(main_frame, textvariable=notice_var, fg="green", width=24, anchor="w")
     notice_label.grid(row=0, column=3, padx=(10,10), pady=10, sticky="w")
-    def center_window(win, width=1400, height=540):
+    def center_window(win, width=1400, height=640):
         win.update_idletasks()
         screen_width = win.winfo_screenwidth()
         screen_height = win.winfo_screenheight()
