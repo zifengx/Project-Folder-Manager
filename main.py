@@ -475,9 +475,93 @@ def run_app():
     tree.column("Type", width=60, anchor="center")
     tree.column("Comment", width=320, anchor="w")
     tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+    def edit_tree_item(event):
+        selected = tree.focus()
+        if not selected:
+            return
+        name = tree.item(selected, "text")
+        values = tree.item(selected, "values")
+        kind = values[0] if values else ""
+        comment = values[1] if len(values) > 1 else ""
+        # Dialog for editing name and comment
+        dialog = tk.Toplevel(visual_frame)
+        dialog.title(f"Edit {kind}")
+        tk.Label(dialog, text="Name:").grid(row=0, column=0, padx=8, pady=6, sticky="e")
+        name_var = tk.StringVar(value=name)
+        tk.Entry(dialog, textvariable=name_var, width=48).grid(row=0, column=1, padx=8, pady=6)
+        tk.Label(dialog, text="Comment:").grid(row=1, column=0, padx=8, pady=6, sticky="e")
+        comment_var = tk.StringVar(value=comment)
+        tk.Entry(dialog, textvariable=comment_var, width=48).grid(row=1, column=1, padx=8, pady=6)
+        result = {"ok": False}
+        def on_ok():
+            result["ok"] = True
+            dialog.destroy()
+        tk.Button(dialog, text="Save", command=on_ok).grid(row=2, column=0, columnspan=2, pady=10)
+        dialog.transient(visual_frame)
+        dialog.grab_set()
+        dialog.update_idletasks()
+        # Center the dialog in the middle of the Folder Structure area (visual_frame)
+        parent_x = visual_frame.winfo_rootx()
+        parent_y = visual_frame.winfo_rooty()
+        parent_w = visual_frame.winfo_width()
+        parent_h = visual_frame.winfo_height()
+        dialog_w = dialog.winfo_width()
+        dialog_h = dialog.winfo_height()
+        x = parent_x + (parent_w // 2) - (dialog_w // 2)
+        y = parent_y + (parent_h // 2) - (dialog_h // 2)
+        dialog.geometry(f"+{x}+{y}")
+        dialog.wait_window()
+        if not result["ok"]:
+            return
+        new_name = name_var.get().strip()
+        new_comment = comment_var.get().strip()
+        if not new_name:
+            messagebox.showerror("Error", "Name cannot be empty.")
+            return
+        # Update structure JSON
+        struct = load_structure_json()
+        def update_item(items):
+            for item in items:
+                if item["name"] == name:
+                    item["name"] = new_name
+                    if new_comment:
+                        item["comment"] = new_comment
+                    elif "comment" in item:
+                        del item["comment"]
+                    return True
+                if "folders" in item and update_item(item["folders"]):
+                    return True
+            return False
+        found = False
+        if kind == "Folder":
+            found = update_item(struct["folders"])
+        elif kind == "File":
+            for file_item in struct["files"]:
+                if file_item["name"] == name:
+                    file_item["name"] = new_name
+                    if new_comment:
+                        file_item["comment"] = new_comment
+                    elif "comment" in file_item:
+                        del file_item["comment"]
+                    found = True
+                    break
+        if found:
+            save_structure_json(struct)
+            refresh_tree()
+        else:
+            messagebox.showerror("Error", "Could not update item.")
+
+    tree.bind("<Double-1>", edit_tree_item)
+
     btn_frame = tk.Frame(visual_frame)
     tk.Button(btn_frame, text="Add Folder", command=add_folder).pack(side=tk.LEFT, padx=5)
     tk.Button(btn_frame, text="Add File", command=add_file).pack(side=tk.LEFT, padx=5)
+    def on_edit_tree_item():
+        # Simulate double-click edit for selected item
+        event = None
+        edit_tree_item(event)
+    tk.Button(btn_frame, text="Edit Selected", command=on_edit_tree_item).pack(side=tk.LEFT, padx=5)
     tk.Button(btn_frame, text="Remove Selected", command=remove_item).pack(side=tk.LEFT, padx=5)
     btn_frame.pack(pady=5)
     visual_frame.pack(fill=tk.BOTH, expand=True)
