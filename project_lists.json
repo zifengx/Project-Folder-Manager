@@ -3,18 +3,24 @@
     "id": 1,
     "name": "Project A",
     "description": "This is a description of Project A.",
+    "start_date": "2023-01-01",
+    "end_date": "",
     "status": "active"
   },
   {
     "id": 2,
     "name": "Project B",
     "description": "This is a description of Project B.",
+    "start_date": "2023-01-01",
+    "end_date": "",
     "status": "active"
   },
   {
     "id": 3,
     "name": "Project C",
     "description": "This is a description of Project C.",
-    "status": "depredcated"
+    "start_date": "2023-01-01",
+    "end_date": "2023-12-31",
+    "status": "deprecated"
   }
 ]

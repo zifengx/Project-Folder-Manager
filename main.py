@@ -159,7 +159,7 @@ def run_app():
         projects = sorted(load_project_list(), key=lambda p: p.get("id", 0), reverse=True)
         for proj in projects:
             values = (proj.get("id", ""), proj.get("name", ""), proj.get("description", ""), proj.get("status", ""))
-            if proj.get("status", "") == "depredcated":
+            if proj.get("status", "") == "deprecated":
                 proj_tree.insert("", tk.END, values=values, tags=("deprecated",))
             else:
                 proj_tree.insert("", tk.END, values=values)
@@ -176,7 +176,7 @@ def run_app():
         tk.Entry(dialog, textvariable=desc_var, width=40).grid(row=1, column=1, padx=8, pady=4)
         tk.Label(dialog, text="Status:").grid(row=2, column=0, sticky="e", padx=8, pady=4)
         status_var = tk.StringVar(value=proj.get("status", "active"))
-        status_options = ["active", "depredcated"]
+        status_options = ["active", "deprecated"]
         status_menu = ttk.Combobox(dialog, textvariable=status_var, values=status_options, state="readonly", width=18)
         status_menu.grid(row=2, column=1, padx=8, pady=4, sticky="w")
         result = {"ok": False}
