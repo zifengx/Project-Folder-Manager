@@ -1,6 +1,7 @@
 import re
 import os
 import subprocess
+import sys
 
 main_py = "main.py"
 spec_files = ["main_win.spec","main_mac.spec"]
@@ -70,4 +71,9 @@ def main():
 if __name__ == "__main__":
     main()
     # Build with PyInstaller after updating version
-    subprocess.run(["pyinstaller", "main.spec"])
+    if sys.platform == "win32":
+        subprocess.run(["pyinstaller", "main_win.spec"])
+    elif sys.platform == "darwin":
+        subprocess.run(["pyinstaller", "main_mac.spec"])
+    else:
+        print("Unsupported OS for automatic build. Please run PyInstaller manually.")
