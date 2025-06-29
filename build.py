@@ -3,7 +3,7 @@ import os
 import subprocess
 
 main_py = "main.py"
-spec_files = ["main.spec"]
+spec_files = ["main_win.spec","main_mac.spec"]
 
 def get_app_name_and_version():
     app_name = None
@@ -36,10 +36,20 @@ def update_name_in_spec(specfile, app_name, new_version):
     with open(specfile, encoding="utf-8") as f:
         lines = f.readlines()
     new_name = f"{app_name} v{new_version}"
+    new_name_app = f"{new_name}.app"
     with open(specfile, "w", encoding="utf-8") as f:
         for line in lines:
-            # Replace name='...' with new app name and version
-            f.write(re.sub(r"name='[^']*'", f"name='{new_name}'", line))
+            # Update all name='...' fields
+            if "BUNDLE(" in line:
+                # Next lines may contain name= for the BUNDLE
+                f.write(line)
+                continue
+            if re.search(r"name='[^']*\.app'", line):
+                # For BUNDLE, ensure .app suffix
+                f.write(re.sub(r"name='[^']*\.app'", f"name='{new_name_app}'", line))
+            else:
+                # For other name fields
+                f.write(re.sub(r"name='[^']*'", f"name='{new_name}'", line))
 
 def main():
     app_name, current_version = get_app_name_and_version()
