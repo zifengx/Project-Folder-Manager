@@ -79,11 +79,12 @@ def run_app():
     from tkinter import ttk
     root = tk.Tk()
     root.title(APP_TITLE)
-    # Set fixed window size and disable resizing
+    # Set window to be resizable
     fixed_width = 1500
     fixed_height = 700
     root.geometry(f"{fixed_width}x{fixed_height}")
-    root.resizable(False, False)
+    root.minsize(900, 600)
+    root.resizable(True, True)
     try:
         ensure_structure_json()
     except Exception as e:
@@ -129,7 +130,7 @@ def run_app():
         return max(p.get("id", 0) for p in projects) + 1
 
     # --- Main Area (left) ---
-    main_frame = tk.Frame(root)
+    main_frame = tk.Frame(root, width=400)
     main_frame.grid(row=0, column=0, sticky="nsew", padx=(10,0), pady=10)
     main_frame.grid_rowconfigure(1, weight=1)
     main_frame.grid_columnconfigure(0, weight=1)
@@ -749,9 +750,10 @@ def run_app():
         notice_var.set(f"Project '{project_name}' Created!")
         project_name_var.set("")  # Clear the input after creation
 
-    project_name_var = tk.StringVar()
+    # Project Name widgets (reduce entry width)
     tk.Label(main_frame, text="Project Name:").grid(row=0, column=0, padx=(10,0), pady=10, sticky="w")
-    tk.Entry(main_frame, textvariable=project_name_var, width=60).grid(row=0, column=1, padx=(0,0), pady=10, sticky="w")
+    project_name_var = tk.StringVar()
+    tk.Entry(main_frame, textvariable=project_name_var, width=32).grid(row=0, column=1, padx=(0,0), pady=10, sticky="w")
     tk.Button(main_frame, text="Create Project", command=create_project_gui).grid(row=0, column=2, padx=(4,0), pady=10, sticky="w")
     notice_var = tk.StringVar(value=" ")
     notice_label = tk.Label(main_frame, textvariable=notice_var, fg="green", width=24, anchor="w")
