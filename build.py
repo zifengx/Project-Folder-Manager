@@ -63,6 +63,9 @@ def main():
     if not new_version:
         print("No version entered. Aborting.")
         return
+    if not re.match(r'^\d+\.\d+\.\d+$', new_version):
+        print("Invalid version format. Please use Semantic Versioning (MAJOR.MINOR.PATCH), e.g., '2.1.2'. Aborting.")
+        return
     update_version_in_main_py(new_version)
     for specfile in spec_files:
         update_name_in_spec(specfile, app_name, new_version)
