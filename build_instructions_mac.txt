@@ -1,0 +1,39 @@
+# Build Instructions for macOS
+
+These steps will help you build a standalone macOS application (.app bundle) for your Project Folder Manager using PyInstaller.
+
+## 1. Install PyInstaller
+
+Open Terminal and run:
+
+    pip3 install pyinstaller
+
+## 2. Build the .app Bundle
+
+From your project directory, run:
+
+    pyinstaller --windowed \
+      --add-data "project_folder_structure.json:." \
+      --add-data "project_lists.json:." \
+      --name "Project Folder Manager v2.1.2" \
+      main.py
+
+- This will create a .app bundle in the `dist/` directory.
+- The `--windowed` flag ensures no terminal window opens with your GUI app.
+- The `--add-data` options include your JSON files in the app bundle.
+
+## 3. Run the App
+
+Double-click the `.app` file in the `dist/` folder, or run it from Terminal:
+
+    open "dist/Project Folder Manager v2.1.2.app"
+
+## 4. (Optional) Create a DMG for Distribution
+
+To create a DMG disk image for easy distribution, see your `build_dmg_instructions.txt` or run:
+
+    hdiutil create -volname "ProjectFolderManager" -srcfolder "dist/Project Folder Manager v2.1.2.app" -ov -format UDZO dist/ProjectFolderManager.dmg
+
+---
+
+For advanced options or troubleshooting, see the PyInstaller documentation: https://pyinstaller.org/en/stable/usage.html
