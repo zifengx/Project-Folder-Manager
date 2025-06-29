@@ -56,23 +56,26 @@ def main():
     app_name, current_version = get_app_name_and_version()
     if not app_name or not current_version:
         print("Could not find APP_NAME or VERSION in main.py")
-        return
+        return False
     print(f"Current app name: {app_name}")
     print(f"Current version: {current_version}")
     new_version = input("Enter new version number: ").strip()
     if not new_version:
         print("No version entered. Aborting.")
-        return
+        return False
     if not re.match(r'^\d+\.\d+\.\d+$', new_version):
         print("Invalid version format. Please use Semantic Versioning (MAJOR.MINOR.PATCH), e.g., '2.1.2'. Aborting.")
-        return
+        return False
     update_version_in_main_py(new_version)
     for specfile in spec_files:
         update_name_in_spec(specfile, app_name, new_version)
     print(f"Updated VERSION to: {new_version} and updated spec file names.")
+    return True
 
 if __name__ == "__main__":
-    main()
+    result = main()
+    if not result:
+        sys.exit(1)
     # Build with PyInstaller after updating version
     if sys.platform == "win32":
         subprocess.run(["pyinstaller", "main_win.spec"])

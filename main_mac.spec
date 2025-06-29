@@ -21,7 +21,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='Project Folder Manager v2.1.2',
+    name='Project Folder Manager v2.1.3',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -40,11 +40,11 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='Project Folder Manager v2.1.2',
+    name='Project Folder Manager v2.1.3',
 )
 app = BUNDLE(
     coll,
-    name='Project Folder Manager v2.1.2.app',
+    name='Project Folder Manager v2.1.3.app',
     icon=None,
     bundle_identifier=None,
 )
