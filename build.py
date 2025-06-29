@@ -3,7 +3,7 @@ import os
 import subprocess
 
 main_py = "main.py"
-spec_files = ["main.spec", "main_mac.spec"]
+spec_files = ["main.spec"]
 
 def get_app_name_and_version():
     app_name = None
