@@ -189,18 +189,42 @@ def run_app():
         status_options = ["active", "deprecated"]
         status_menu = ttk.Combobox(dialog, textvariable=status_var, values=status_options, state="readonly", width=18)
         status_menu.grid(row=2, column=1, padx=8, pady=4, sticky="w")
-        # Start Date (readonly)
+        # Start Date (editable)
         tk.Label(dialog, text="Start Date:").grid(row=3, column=0, sticky="e", padx=8, pady=4)
         start_date_var = tk.StringVar(value=proj.get("start_date", ""))
-        start_date_entry = tk.Entry(dialog, textvariable=start_date_var, width=20, state="readonly")
+        start_date_entry = tk.Entry(dialog, textvariable=start_date_var, width=20)
         start_date_entry.grid(row=3, column=1, padx=8, pady=4, sticky="w")
-        # End Date (readonly, only set if deprecated)
+        # End Date (editable, only enabled if deprecated)
         tk.Label(dialog, text="End Date:").grid(row=4, column=0, sticky="e", padx=8, pady=4)
         end_date_var = tk.StringVar(value=proj.get("end_date", ""))
-        end_date_entry = tk.Entry(dialog, textvariable=end_date_var, width=20, state="readonly")
+        end_date_entry = tk.Entry(dialog, textvariable=end_date_var, width=20)
         end_date_entry.grid(row=4, column=1, padx=8, pady=4, sticky="w")
+        def on_status_change(event=None):
+            if status_var.get() == "deprecated":
+                end_date_entry.config(state="normal")
+                if not end_date_var.get():
+                    end_date_var.set(datetime.date.today().isoformat())
+            else:
+                end_date_entry.config(state="normal")
+                end_date_var.set("")
+                end_date_entry.config(state="disabled")
+        status_menu.bind("<<ComboboxSelected>>", on_status_change)
+        on_status_change()
         result = {"ok": False}
         def on_ok():
+            # Validate name
+            if not name_var.get().strip():
+                messagebox.showerror("Error", "Project name cannot be empty.", parent=dialog)
+                return
+            # Validate date formats
+            try:
+                if start_date_var.get().strip():
+                    datetime.date.fromisoformat(start_date_var.get().strip())
+                if end_date_var.get().strip():
+                    datetime.date.fromisoformat(end_date_var.get().strip())
+            except Exception:
+                messagebox.showerror("Error", "Start Date and End Date must be in YYYY-MM-DD format.", parent=dialog)
+                return
             result["ok"] = True
             dialog.destroy()
         tk.Button(dialog, text="Save", command=on_ok).grid(row=5, column=0, columnspan=2, pady=10)
@@ -222,7 +246,7 @@ def run_app():
             new_status = status_var.get().strip()
             new_end_date = end_date_var.get().strip()
             # If status changed to deprecated and end_date not set, set it
-            if proj.get("status", "active") != "deprecated" and new_status == "deprecated":
+            if proj.get("status", "active") != "deprecated" and new_status == "deprecated" and not new_end_date:
                 new_end_date = datetime.date.today().isoformat()
             # If status changed from deprecated to active, clear end_date
             if proj.get("status", "active") == "deprecated" and new_status != "deprecated":
