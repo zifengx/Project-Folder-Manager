@@ -258,6 +258,108 @@ def run_app():
                 break
 
     btn_proj_frame = tk.Frame(visual_proj_frame)
+    
+    def add_project_info_dialog(parent):
+        dialog = tk.Toplevel(parent)
+        dialog.title("Add Project")
+        tk.Label(dialog, text="Project Name:").grid(row=0, column=0, sticky="e", padx=8, pady=4)
+        name_var = tk.StringVar()
+        tk.Entry(dialog, textvariable=name_var, width=40).grid(row=0, column=1, padx=8, pady=4)
+        tk.Label(dialog, text="Description:").grid(row=1, column=0, sticky="e", padx=8, pady=4)
+        desc_var = tk.StringVar()
+        tk.Entry(dialog, textvariable=desc_var, width=40).grid(row=1, column=1, padx=8, pady=4)
+        # Status
+        tk.Label(dialog, text="Status:").grid(row=2, column=0, sticky="e", padx=8, pady=4)
+        status_var = tk.StringVar(value="active")
+        status_options = ["active", "deprecated"]
+        status_menu = ttk.Combobox(dialog, textvariable=status_var, values=status_options, state="readonly", width=18)
+        status_menu.grid(row=2, column=1, padx=8, pady=4, sticky="w")
+        # Start Date
+        tk.Label(dialog, text="Start Date:").grid(row=3, column=0, sticky="e", padx=8, pady=4)
+        today_str = datetime.date.today().isoformat()
+        start_date_var = tk.StringVar(value=today_str)
+        tk.Entry(dialog, textvariable=start_date_var, width=20).grid(row=3, column=1, padx=8, pady=4, sticky="w")
+        # End Date
+        tk.Label(dialog, text="End Date:").grid(row=4, column=0, sticky="e", padx=8, pady=4)
+        end_date_var = tk.StringVar(value="")
+        end_date_entry = tk.Entry(dialog, textvariable=end_date_var, width=20)
+        end_date_entry.grid(row=4, column=1, padx=8, pady=4, sticky="w")
+        # Enable/disable end date based on status
+        def on_status_change(event=None):
+            if status_var.get() == "deprecated":
+                end_date_entry.config(state="normal")
+                if not end_date_var.get():
+                    end_date_var.set(today_str)
+            else:
+                end_date_entry.config(state="normal")
+                end_date_var.set("")
+                end_date_entry.config(state="disabled")
+        status_menu.bind("<<ComboboxSelected>>", on_status_change)
+        on_status_change()
+        result = {"ok": False}
+        def on_ok():
+            if not name_var.get().strip():
+                messagebox.showerror("Error", "Project name cannot be empty.", parent=dialog)
+                return
+            # Optionally validate date format
+            try:
+                if start_date_var.get().strip():
+                    datetime.date.fromisoformat(start_date_var.get().strip())
+                if end_date_var.get().strip():
+                    datetime.date.fromisoformat(end_date_var.get().strip())
+            except Exception:
+                messagebox.showerror("Error", "Start Date and End Date must be in YYYY-MM-DD format.", parent=dialog)
+                return
+            result["ok"] = True
+            dialog.destroy()
+        tk.Button(dialog, text="Add", command=on_ok).grid(row=5, column=0, columnspan=2, pady=10)
+        dialog.transient(parent)
+        dialog.grab_set()
+        dialog.update_idletasks()
+        # Center dialog
+        parent_x = parent.winfo_rootx()
+        parent_y = parent.winfo_rooty()
+        parent_w = parent.winfo_width()
+        parent_h = parent.winfo_height()
+        dialog_w = dialog.winfo_width()
+        dialog_h = dialog.winfo_height()
+        x = parent_x + (parent_w // 2) - (dialog_w // 2)
+        y = parent_y + (parent_h // 2) - (dialog_h // 2)
+        dialog.geometry(f"+{x}+{y}")
+        dialog.wait_window()
+        if result["ok"]:
+            return (
+                name_var.get().strip(),
+                desc_var.get().strip(),
+                status_var.get().strip(),
+                start_date_var.get().strip(),
+                end_date_var.get().strip()
+            )
+        return None, None, None, None, None
+
+    def on_add_project_info():
+        name, desc, status, start_date, end_date = add_project_info_dialog(right_frame)
+        if not name:
+            return
+        projects = load_project_list()
+        if any(p["name"] == name for p in projects):
+            messagebox.showerror("Error", f"Project '{name}' already exists.", parent=right_frame)
+            return
+        new_proj = {
+            "id": get_next_project_id(projects),
+            "name": name,
+            "description": desc,
+            "status": status,
+            "start_date": start_date,
+            "end_date": end_date if status == "deprecated" else ""
+        }
+        projects.append(new_proj)
+        save_project_list(projects)
+        refresh_project_tree()
+        refresh_project_json()
+        messagebox.showinfo("Success", f"Project '{name}' added.", parent=right_frame)
+
+    tk.Button(btn_proj_frame, text="Add Project", command=on_add_project_info).pack(side=tk.LEFT, padx=5)
     tk.Button(btn_proj_frame, text="Edit Selected", command=on_edit_project).pack(side=tk.LEFT, padx=5)
 
     def on_remove_project():
