@@ -877,7 +877,7 @@ def run_app():
         project_name_var.set("")  # Clear the input after creation
 
     # Project Name widgets (reduce entry width)
-    tk.Label(main_frame, text="Project Name:").grid(row=0, column=0, padx=(10,0), pady=10, sticky="w")
+    tk.Label(main_frame, text="Project Name:").grid(row=0, column=0, padx=(10,0), pady=10, sticky="e")
     project_name_var = tk.StringVar()
     tk.Entry(main_frame, textvariable=project_name_var, width=32).grid(row=0, column=1, padx=(0,0), pady=10, sticky="w")
     tk.Button(main_frame, text="Create Project", command=create_project_gui).grid(row=0, column=2, padx=(4,0), pady=10, sticky="w")
