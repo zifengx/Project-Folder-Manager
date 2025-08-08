@@ -6,7 +6,7 @@ import os
 
 # Application metadata
 APP_NAME = "Project Folder Manager"
-VERSION = "2.1.5"
+VERSION = "3.0.0"
 APP_TITLE = f"{APP_NAME} v{VERSION}"
 
 # Paths

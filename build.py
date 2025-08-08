@@ -54,10 +54,8 @@ def update_name_in_spec(specfile, app_name, new_version):
     
     with open(specfile, "w", encoding="utf-8") as f:
         for line in lines:
-            # Update the main script path for refactored structure
-            if "'main.py'" in line and "Analysis(" in line:
-                f.write(line.replace("'main.py'", "'src/main.py'"))
-                continue
+            # Keep main.py as entry point since it imports from src.main
+            # No need to change the path anymore
                 
             # Update all name='...' fields
             if "BUNDLE(" in line:
