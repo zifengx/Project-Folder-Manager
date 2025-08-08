@@ -21,6 +21,6 @@
     "description": "This is a description of Project C.",
     "start_date": "2023-01-01",
     "end_date": "2023-12-31",
-    "status": "deprecated"
+    "status": "inactive"
   }
 ]

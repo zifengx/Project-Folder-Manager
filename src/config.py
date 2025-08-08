@@ -6,7 +6,7 @@ import os
 
 # Application metadata
 APP_NAME = "Project Folder Manager"
-VERSION = "2.1.4"
+VERSION = "2.1.5"
 APP_TITLE = f"{APP_NAME} v{VERSION}"
 
 # Paths
@@ -27,5 +27,5 @@ MIN_HEIGHT = 600
 
 # Project status constants
 STATUS_ACTIVE = "active"
-STATUS_DEPRECATED = "deprecated"
-STATUS_OPTIONS = [STATUS_ACTIVE, STATUS_DEPRECATED]
+STATUS_INACTIVE = "inactive"
+STATUS_OPTIONS = [STATUS_ACTIVE, STATUS_INACTIVE]

@@ -7,7 +7,7 @@ import json
 from typing import List, Optional, Callable
 from .models import Project, ProjectManager
 from .ui_utils import DialogManager, ValidationHelper, FormBuilder
-from .config import STATUS_OPTIONS, STATUS_ACTIVE, STATUS_DEPRECATED
+from .config import STATUS_OPTIONS, STATUS_ACTIVE, STATUS_INACTIVE
 import datetime
 
 
@@ -73,7 +73,7 @@ class ProjectDialog:
     
     def _on_status_change(self, *args):
         """Handle status change"""
-        if self.status_var.get() == STATUS_DEPRECATED:
+        if self.status_var.get() == STATUS_INACTIVE:
             self.end_date_entry.config(state="normal")
             if not self.end_date_var.get():
                 self.end_date_var.set(datetime.date.today().isoformat())
@@ -190,8 +190,8 @@ class ProjectListPanel:
         
         self.tree.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
         
-        # Configure styling for deprecated projects
-        self.tree.tag_configure("deprecated", foreground="#888888", 
+        # Configure styling for inactive projects
+        self.tree.tag_configure("inactive", foreground="#888888", 
                                font=("Arial", 10, "overstrike"))
         
         # Bind double-click
@@ -342,8 +342,8 @@ class ProjectListPanel:
                 project.start_date
             )
             
-            if project.status == STATUS_DEPRECATED:
-                self.tree.insert("", tk.END, values=values, tags=("deprecated",))
+            if project.status == STATUS_INACTIVE:
+                self.tree.insert("", tk.END, values=values, tags=("inactive",))
             else:
                 self.tree.insert("", tk.END, values=values)
     
