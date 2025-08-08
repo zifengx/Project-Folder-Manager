@@ -25,22 +25,42 @@ class DialogManager:
         dialog.geometry(f"+{x}+{y}")
     
     @staticmethod
-    def create_modal_dialog(parent: tk.Widget, title: str, width: int = 400, height: int = 300) -> tk.Toplevel:
+    def create_modal_dialog(parent: tk.Widget, title: str, width: int = None, height: int = None) -> tk.Toplevel:
         """Create a modal dialog with standard settings"""
         dialog = tk.Toplevel(parent)
         dialog.title(title)
         dialog.transient(parent)
         dialog.grab_set()
+        
+        # If width/height provided, set fixed size, otherwise auto-size
+        if width and height:
+            dialog.geometry(f"{width}x{height}")
+        
+        return dialog
+    
+    @staticmethod
+    def auto_size_and_center(dialog: tk.Toplevel, parent: tk.Widget):
+        """Auto-size dialog to fit content and center it"""
+        dialog.update_idletasks()
+        
+        # Get required size
+        req_width = dialog.winfo_reqwidth()
+        req_height = dialog.winfo_reqheight()
+        
+        # Add some padding
+        width = req_width + 40
+        height = req_height + 20
+        
+        # Set size and center
         dialog.geometry(f"{width}x{height}")
         DialogManager.center_dialog(dialog, parent)
-        return dialog
     
     @staticmethod
     def confirm_dialog(parent: tk.Widget, title: str, message: str) -> bool:
         """Show confirmation dialog"""
-        dialog = DialogManager.create_modal_dialog(parent, title, 350, 150)
+        dialog = DialogManager.create_modal_dialog(parent, title)
         
-        tk.Label(dialog, text=message, wraplength=300).pack(padx=18, pady=16)
+        tk.Label(dialog, text=message, wraplength=300).pack(padx=15, pady=12)
         
         result = {"confirmed": False}
         
@@ -54,7 +74,10 @@ class DialogManager:
         btn_frame = tk.Frame(dialog)
         tk.Button(btn_frame, text="Yes", command=on_yes, width=10).pack(side=tk.LEFT, padx=8)
         tk.Button(btn_frame, text="No", command=on_no, width=10).pack(side=tk.LEFT, padx=8)
-        btn_frame.pack(pady=(0, 12))
+        btn_frame.pack(pady=(0, 10))
+        
+        # Auto-size and center
+        DialogManager.auto_size_and_center(dialog, parent)
         
         dialog.wait_window()
         return result["confirmed"]
@@ -93,11 +116,11 @@ class FormBuilder:
     def add_text_field(self, label: str, initial_value: str = "", width: int = 40) -> tk.StringVar:
         """Add a text field to the form"""
         tk.Label(self.parent, text=f"{label}:").grid(
-            row=self.row, column=0, sticky="e", padx=8, pady=4
+            row=self.row, column=0, sticky="e", padx=5, pady=2
         )
         var = tk.StringVar(value=initial_value)
         entry = tk.Entry(self.parent, textvariable=var, width=width)
-        entry.grid(row=self.row, column=1, padx=8, pady=4)
+        entry.grid(row=self.row, column=1, padx=5, pady=2, sticky="w")
         
         self.fields[label.lower().replace(" ", "_")] = var
         self.row += 1
@@ -108,21 +131,28 @@ class FormBuilder:
         from tkinter import ttk
         
         tk.Label(self.parent, text=f"{label}:").grid(
-            row=self.row, column=0, sticky="e", padx=8, pady=4
+            row=self.row, column=0, sticky="e", padx=5, pady=2
         )
         var = tk.StringVar(value=initial_value)
         combo = ttk.Combobox(self.parent, textvariable=var, values=values, 
                            state="readonly", width=18)
-        combo.grid(row=self.row, column=1, padx=8, pady=4, sticky="w")
+        combo.grid(row=self.row, column=1, padx=5, pady=2, sticky="w")
         
         self.fields[label.lower().replace(" ", "_")] = var
         self.row += 1
         return var
     
     def add_button_row(self, buttons: list):
-        """Add a row of buttons"""
-        for i, (text, command) in enumerate(buttons):
-            tk.Button(self.parent, text=text, command=command).grid(
-                row=self.row, column=i, pady=10, padx=5
+        """Add a row of buttons with tight spacing"""
+        # Create a frame for buttons to control spacing better
+        button_frame = tk.Frame(self.parent)
+        button_frame.grid(row=self.row, column=0, columnspan=2, pady=8)
+        
+        # Reverse button order so Save appears left of Cancel
+        reversed_buttons = list(buttons)
+        
+        for text, command in reversed_buttons:
+            tk.Button(button_frame, text=text, command=command).pack(
+                side=tk.LEFT, padx=5
             )
         self.row += 1

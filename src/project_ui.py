@@ -22,7 +22,7 @@ class ProjectDialog:
     
     def _create_dialog(self):
         title = f"Edit Project: {self.project.name}" if self.project else "Add Project"
-        self.dialog = DialogManager.create_modal_dialog(self.parent, title, 500, 300)
+        self.dialog = DialogManager.create_modal_dialog(self.parent, title)
         
         self.form = FormBuilder(self.dialog)
         
@@ -43,9 +43,9 @@ class ProjectDialog:
             width=20
         )
         
-        # End date field
+        # End date field (manual to maintain control logic)
         tk.Label(self.dialog, text="End Date:").grid(
-            row=self.form.row, column=0, sticky="e", padx=8, pady=4
+            row=self.form.row, column=0, sticky="e", padx=5, pady=2
         )
         self.end_date_var = tk.StringVar(
             value=self.project.end_date if self.project else ""
@@ -54,7 +54,7 @@ class ProjectDialog:
             self.dialog, textvariable=self.end_date_var, width=20
         )
         self.end_date_entry.grid(
-            row=self.form.row, column=1, padx=8, pady=4, sticky="w"
+            row=self.form.row, column=1, padx=5, pady=2, sticky="w"
         )
         self.form.row += 1
         
@@ -67,6 +67,9 @@ class ProjectDialog:
             ("Save" if self.project else "Add", self._on_save),
             ("Cancel", self._on_cancel)
         ])
+        
+        # Auto-size and center the dialog
+        DialogManager.auto_size_and_center(self.dialog, self.parent)
     
     def _on_status_change(self, *args):
         """Handle status change"""

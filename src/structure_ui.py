@@ -22,7 +22,7 @@ class StructureItemDialog:
     
     def _create_dialog(self):
         title = f"{'Edit' if self.name else 'Add'} {self.item_type}"
-        self.dialog = DialogManager.create_modal_dialog(self.parent, title, 450, 200)
+        self.dialog = DialogManager.create_modal_dialog(self.parent, title)
         
         self.form = FormBuilder(self.dialog)
         
@@ -42,6 +42,9 @@ class StructureItemDialog:
             ("Save" if self.name else "Add", self._on_save),
             ("Cancel", self._on_cancel)
         ])
+        
+        # Auto-size and center the dialog
+        DialogManager.auto_size_and_center(self.dialog, self.parent)
     
     def _setup_file_placeholder(self, entry: tk.Entry):
         """Setup placeholder text for file name entry"""

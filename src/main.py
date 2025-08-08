@@ -76,41 +76,43 @@ class MainApplication:
         """Create left panel with project creation and configuration"""
         self.main_frame = tk.Frame(self.root, width=400)
         self.main_frame.grid(row=0, column=0, sticky="nsew", padx=(10, 0), pady=10)
-        self.main_frame.grid_rowconfigure(1, weight=1)
+        self.main_frame.grid_rowconfigure(1, weight=1)  # Give weight to config section only
         self.main_frame.grid_columnconfigure(0, weight=1)
         
         # Project creation section
         self._create_project_creation_section()
         
-        # Add some spacing
-        self.main_frame.grid_rowconfigure(1, minsize=10)
-        
-        # Configuration section
+        # Configuration section (this gets the weight)
         self._create_config_section()
     
     def _create_project_creation_section(self):
         """Create project creation controls"""
+        # Create a frame for project creation controls to better control layout
+        project_frame = tk.Frame(self.main_frame)
+        project_frame.grid(row=0, column=0, columnspan=4, sticky="ew", padx=10, pady=10)
+        # Don't give weight to any column to keep controls tight together
+        
         # Project name input
-        tk.Label(self.main_frame, text="Project Name:").grid(
-            row=0, column=0, padx=(10, 0), pady=10, sticky="e"
+        tk.Label(project_frame, text="Project Name:").grid(
+            row=0, column=0, padx=(0, 5), pady=0, sticky="w"
         )
         
         self.project_name_var = tk.StringVar()
-        tk.Entry(self.main_frame, textvariable=self.project_name_var, width=32).grid(
-            row=0, column=1, padx=(0, 0), pady=10, sticky="w"
+        tk.Entry(project_frame, textvariable=self.project_name_var, width=32).grid(
+            row=0, column=1, padx=(0, 5), pady=0, sticky="w"
         )
         
-        tk.Button(self.main_frame, text="Create Project", command=self._create_project).grid(
-            row=0, column=2, padx=(4, 0), pady=10, sticky="w"
+        tk.Button(project_frame, text="Create Project", command=self._create_project).grid(
+            row=0, column=2, padx=(0, 10), pady=0, sticky="w"
         )
         
         # Status/notice label
         self.notice_var = tk.StringVar(value=" ")
         self.notice_label = tk.Label(
-            self.main_frame, textvariable=self.notice_var, 
+            project_frame, textvariable=self.notice_var, 
             fg="green", width=24, anchor="w"
         )
-        self.notice_label.grid(row=0, column=3, padx=(10, 10), pady=10, sticky="w")
+        self.notice_label.grid(row=0, column=3, padx=(0, 0), pady=0, sticky="w")
     
     def _create_config_section(self):
         """Create configuration section"""
@@ -118,10 +120,10 @@ class MainApplication:
             self.main_frame, text="Config", padx=5, pady=5
         )
         self.config_frame.grid(
-            row=2, column=0, columnspan=4, padx=10, pady=(0, 10), sticky="nsew"
+            row=1, column=0, columnspan=4, padx=10, pady=(5, 10), sticky="nsew"
         )
         self.config_frame.columnconfigure(0, weight=1)
-        self.config_frame.rowconfigure(0, weight=1)
+        self.config_frame.rowconfigure(1, weight=1)  # Give weight to structure panel
         
         # Parent directory panel
         self.parent_dir_panel = ParentDirectoryPanel(
