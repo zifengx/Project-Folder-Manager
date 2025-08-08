@@ -122,7 +122,7 @@ def run_app():
 
     def save_project_list(projects):
         with open(PROJECT_LISTS_FILE, "w", encoding="utf-8") as f:
-            json.dump(projects, f, indent=2)
+            json.dump(projects, f, indent=2, ensure_ascii=False)
 
     def get_next_project_id(projects):
         if not projects:
@@ -486,7 +486,7 @@ def run_app():
 
     def save_structure_json(struct):
         with open(STRUCTURE_JSON, "w", encoding="utf-8") as f:
-            json.dump(struct, f, indent=4)
+            json.dump(struct, f, indent=4, ensure_ascii=False)
 
     def refresh_tree():
         tree.delete(*tree.get_children())
@@ -700,7 +700,7 @@ def run_app():
                 struct = load_structure()
                 struct["parent_directory"] = selected
                 with open(STRUCTURE_JSON, "w", encoding="utf-8") as f:
-                    json.dump(struct, f, indent=2)
+                    json.dump(struct, f, indent=2, ensure_ascii=False)
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to save parent directory: {e}")
     tk.Button(pd_frame, text="Browse...", command=browse_parent_dir).pack(side=tk.LEFT)
@@ -835,7 +835,7 @@ def run_app():
             struct = load_structure()
             struct["parent_directory"] = path
             with open(STRUCTURE_JSON, "w", encoding="utf-8") as f:
-                json.dump(struct, f, indent=2)
+                json.dump(struct, f, indent=2, ensure_ascii=False)
         except Exception as e:
             print(f"Warning: Could not save parent directory: {e}")
 
