@@ -3,7 +3,7 @@
 # Spec file for the refactored version
 
 a = Analysis(
-    ['main_new.py'],
+    ['main.py'],
     pathex=[],
     binaries=[],
     datas=[('project_folder_structure.json', '.'), ('project_lists.json', '.')],
@@ -23,7 +23,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='Project Folder Manager v2.1.4 - Refactored',
+    name='Project Folder Manager v2.1.4',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
