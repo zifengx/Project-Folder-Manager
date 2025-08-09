@@ -95,11 +95,34 @@ def validate_refactored_structure():
     
     return True
 
+def ensure_pywin32():
+    """Ensure pywin32 is installed"""
+    try:
+        import win32com.shell
+        import pythoncom
+        print("✅ pywin32 is available")
+        return True
+    except ImportError:
+        print("⚠️  pywin32 not found. Installing...")
+        try:
+            subprocess.run([sys.executable, "-m", "pip", "install", "pywin32"], check=True)
+            print("✅ pywin32 installed successfully")
+            return True
+        except subprocess.CalledProcessError:
+            print("❌ Failed to install pywin32")
+            return False
+
 def main():
     """Main build process"""
     print("=== Project Folder Manager Build Script ===")
     print("Building refactored version with modular structure")
     print()
+    
+    # Ensure pywin32 is installed on Windows
+    if sys.platform == "win32":
+        if not ensure_pywin32():
+            print("Build aborted due to pywin32 installation failure.")
+            return False
     
     # Validate refactored structure
     if not validate_refactored_structure():
