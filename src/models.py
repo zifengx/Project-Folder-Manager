@@ -322,14 +322,15 @@ class StructureManager:
         """Get configured parent directory"""
         try:
             structure = self.load_structure()
-            return structure.get("parent_directory", PROGRAM_ROOT).strip() or PROGRAM_ROOT
+            path = structure.get("parent_directory", PROGRAM_ROOT).strip() or PROGRAM_ROOT
+            return os.path.normpath(path)
         except Exception:
             return PROGRAM_ROOT
     
     def set_parent_directory(self, path: str):
         """Set parent directory"""
         structure = self.load_structure()
-        structure["parent_directory"] = path
+        structure["parent_directory"] = os.path.normpath(path)
         self.save_structure(structure)
     
     def get_sync_directory(self) -> str:
@@ -337,12 +338,13 @@ class StructureManager:
         try:
             structure = self.load_structure()
             sync_dir = structure.get("sync_directory", "").strip()
-            return sync_dir if sync_dir else PROGRAM_ROOT
+            path = sync_dir if sync_dir else PROGRAM_ROOT
+            return os.path.normpath(path)
         except Exception:
             return PROGRAM_ROOT
     
     def set_sync_directory(self, path: str):
         """Set sync directory"""
         structure = self.load_structure()
-        structure["sync_directory"] = path
+        structure["sync_directory"] = os.path.normpath(path)
         self.save_structure(structure)
