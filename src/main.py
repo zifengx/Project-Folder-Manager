@@ -5,39 +5,11 @@ import tkinter as tk
 from tkinter import messagebox
 import os
 import sys
-import ctypes
-import subprocess
 from .config import *
 from .models import ProjectManager, StructureManager
 from .project_ui import ProjectListPanel
 from .structure_ui import StructurePanel, ParentDirectoryPanel, SyncDirectoryPanel
 from .ui_utils import ValidationHelper
-
-
-def is_admin():
-    """Check if running with administrator privileges on Windows"""
-    try:
-        return ctypes.windll.shell32.IsUserAnAdmin()
-    except:
-        return False
-
-
-def run_as_admin():
-    """Restart the application with administrator privileges"""
-    try:
-        if getattr(sys, 'frozen', False):
-            # Running as executable
-            ctypes.windll.shell32.ShellExecuteW(
-                None, "runas", sys.executable, "", None, 1
-            )
-        else:
-            # Running as script
-            ctypes.windll.shell32.ShellExecuteW(
-                None, "runas", sys.executable, " ".join([f'"{arg}"' for arg in sys.argv]), None, 1
-            )
-        return True
-    except:
-        return False
 
 
 class MainApplication:
@@ -55,28 +27,6 @@ class MainApplication:
     def run(self):
         """Run the application"""
         try:
-            # Check for admin privileges on Windows
-            if sys.platform.startswith("win") and not is_admin():
-                # Create a temporary window to show the prompt
-                temp_root = tk.Tk()
-                temp_root.withdraw()  # Hide the window
-                
-                result = messagebox.askyesno(
-                    "Administrator Privileges Required",
-                    "This application needs administrator privileges to create shortcuts/symlinks.\n\n"
-                    "Would you like to restart with administrator privileges?\n\n"
-                    "Click 'No' to continue without shortcuts (text files will be created instead).",
-                    parent=temp_root
-                )
-                
-                temp_root.destroy()
-                
-                if result:
-                    if run_as_admin():
-                        return  # Exit current instance
-                    else:
-                        messagebox.showerror("Error", "Failed to restart with administrator privileges.")
-            
             self._initialize()
             self._create_ui()
             self._setup_event_handlers()
