@@ -382,14 +382,32 @@ class StructurePanel:
         
         try:
             structure = self.structure_manager.load_structure()
-            self._insert_items("", structure.get("folders", []), True)
-            self._insert_items("", structure.get("files", []), False)
+            # Sort folders and files by sync attribute first (manual before auto), then alphabetically by name
+            def sort_key(x):
+                attr = x.get("attribute", "manual")
+                # Use 0 for manual, 1 for auto to ensure manual comes first
+                attr_priority = 0 if attr == "manual" else 1
+                return (attr_priority, x["name"].lower())
+            
+            folders = sorted(structure.get("folders", []), key=sort_key)
+            files = sorted(structure.get("files", []), key=sort_key)
+            self._insert_items("", folders, True)
+            self._insert_items("", files, False)
         except Exception:
             pass
     
     def _insert_items(self, parent: str, items: List[Dict], is_folder: bool):
         """Insert items into tree"""
-        for item in items:
+        # Sort items by sync attribute first (manual before auto), then alphabetically by name (case-insensitive)
+        def sort_key(x):
+            attr = x.get("attribute", "manual")
+            # Use 0 for manual, 1 for auto to ensure manual comes first
+            attr_priority = 0 if attr == "manual" else 1
+            return (attr_priority, x["name"].lower())
+        
+        sorted_items = sorted(items, key=sort_key)
+        
+        for item in sorted_items:
             comment = item.get("comment", "")
             item_type = "Folder" if is_folder else "File"
             attribute = item.get("attribute", "manual")
@@ -403,7 +421,7 @@ class StructurePanel:
                 values=values
             )
             
-            # Recursively add subfolders
+            # Recursively add subfolders (they will also be sorted with manual before auto, then alphabetically)
             if is_folder and "folders" in item:
                 self._insert_items(node, item["folders"], True)
     
