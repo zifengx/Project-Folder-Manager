@@ -173,8 +173,6 @@ class StructureManager:
     
     def create_project_folders(self, parent_path: str, structure: Dict, sync_path: str = None):
         """Create project folder structure with sync/manual/auto logic"""
-        import sys
-        is_windows = sys.platform.startswith("win")
         
         if not sync_path or os.path.normpath(sync_path) == os.path.normpath(parent_path):
             # Legacy behavior: create everything in parent_path
@@ -219,8 +217,6 @@ class StructureManager:
         return check_folders(structure.get("folders", []))
 
     def _create_items_sync(self, parent_path, sync_path, items):
-        import sys
-        is_windows = sys.platform.startswith("win")
         for item in items:
             sync_mode = item.get("attribute", "manual")
             folder_name = item["name"]
@@ -230,7 +226,7 @@ class StructureManager:
                 os.makedirs(sync_folder, exist_ok=True)
                 # Create shortcut/symlink in parent directory
                 link_path = os.path.join(parent_path, folder_name)
-                self._create_shortcut(link_path, sync_folder, is_windows)
+                self._create_shortcut(link_path, sync_folder)
                 # Recurse into subfolders (create subfolders in sync directory)
                 if "folders" in item:
                     self._create_items_sync(sync_folder, sync_folder, item["folders"])
@@ -243,8 +239,6 @@ class StructureManager:
                     self._create_items_sync(manual_folder, sync_path, item["folders"])
 
     def _create_files_sync(self, parent_path, sync_path, files):
-        import sys
-        is_windows = sys.platform.startswith("win")
         for file_item in files:
             sync_mode = file_item.get("attribute", "manual")
             file_name = file_item["name"]
@@ -255,16 +249,18 @@ class StructureManager:
                     f.write("")
                 # Create shortcut/symlink in parent directory
                 link_path = os.path.join(parent_path, file_name)
-                self._create_shortcut(link_path, sync_file, is_windows)
+                self._create_shortcut(link_path, sync_file)
             else:
                 # Create file in parent directory (for manual items or when no sync_path)
                 manual_file = os.path.join(parent_path, file_name)
                 with open(manual_file, "w", encoding="utf-8") as f:
                     f.write("")
 
-    def _create_shortcut(self, link_path, target_path, is_windows):
+    def _create_shortcut(self, link_path, target_path):
         """Create a shortcut (.lnk on Windows, symlink on other platforms)"""
+        import sys
         import os
+        is_windows = sys.platform.startswith("win")
         try:
             if is_windows:
                 # Use pywin32 to create Windows .lnk shortcut (works for both files and folders)

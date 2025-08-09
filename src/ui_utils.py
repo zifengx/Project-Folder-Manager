@@ -4,7 +4,7 @@ Common UI utilities and dialog helpers
 import tkinter as tk
 from tkinter import messagebox
 import datetime
-from typing import Optional, Tuple, Callable
+from typing import Optional
 
 
 class DialogManager:
