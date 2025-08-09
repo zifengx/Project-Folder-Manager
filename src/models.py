@@ -230,7 +230,7 @@ class StructureManager:
                 os.makedirs(sync_folder, exist_ok=True)
                 # Create shortcut/symlink in parent directory
                 link_path = os.path.join(parent_path, folder_name)
-                self._create_folder_shortcut(link_path, sync_folder, is_windows)
+                self._create_shortcut(link_path, sync_folder, is_windows)
                 # Recurse into subfolders (create subfolders in sync directory)
                 if "folders" in item:
                     self._create_items_sync(sync_folder, sync_folder, item["folders"])
@@ -255,58 +255,49 @@ class StructureManager:
                     f.write("")
                 # Create shortcut/symlink in parent directory
                 link_path = os.path.join(parent_path, file_name)
-                self._create_file_shortcut(link_path, sync_file, is_windows)
+                self._create_shortcut(link_path, sync_file, is_windows)
             else:
                 # Create file in parent directory (for manual items or when no sync_path)
                 manual_file = os.path.join(parent_path, file_name)
                 with open(manual_file, "w", encoding="utf-8") as f:
                     f.write("")
 
-    def _create_folder_shortcut(self, link_path, target_path, is_windows):
+    def _create_shortcut(self, link_path, target_path, is_windows):
+        """Create a shortcut (.lnk on Windows, symlink on other platforms)"""
         import os
         try:
             if is_windows:
-                # Create directory symlink (should work with admin privileges)
-                os.symlink(target_path, link_path, target_is_directory=True)
-            else:
-                os.symlink(target_path, link_path, target_is_directory=True)
-        except Exception as e:
-            # Fallback: Create a text file indicating the link
-            try:
-                with open(link_path + "_link.txt", "w") as f:
-                    f.write(f"Link to: {target_path}\n")
-                    f.write(f"Error creating symlink: {str(e)}\n")
-                    f.write("Try running the application as administrator.\n")
-            except:
-                pass
-
-    def _create_file_shortcut(self, link_path, target_path, is_windows):
-        import os
-        try:
-            if is_windows:
-                # Try to create Windows .lnk shortcut for files first
+                # Use pywin32 to create Windows .lnk shortcut (works for both files and folders)
                 try:
-                    import pythoncom
-                    from win32com.shell import shell
-                    shortcut = pythoncom.CoCreateInstance(
-                        shell.CLSID_ShellLink, None, pythoncom.CLSCTX_INPROC_SERVER, shell.IID_IShellLink
-                    )
-                    shortcut.SetPath(target_path)
-                    shortcut.SetWorkingDirectory(os.path.dirname(target_path))
-                    persist_file = shortcut.QueryInterface(pythoncom.IID_IPersistFile)
-                    persist_file.Save(link_path + ".lnk", 0)
+                    import win32com.client
+                    shell = win32com.client.Dispatch("WScript.Shell")
+                    shortcut = shell.CreateShortcut(link_path + ".lnk")
+                    shortcut.TargetPath = target_path
+                    # Set working directory to parent directory of target for better behavior
+                    shortcut.WorkingDirectory = os.path.dirname(target_path)
+                    shortcut.Save()
                 except Exception:
-                    # Fallback: create symlink (should work with admin privileges)
-                    os.symlink(target_path, link_path)
+                    # Fallback: create symlink (may work without admin on newer Windows)
+                    if os.path.isdir(target_path):
+                        os.symlink(target_path, link_path, target_is_directory=True)
+                    else:
+                        os.symlink(target_path, link_path)
             else:
-                os.symlink(target_path, link_path)
+                # Create symlink on non-Windows platforms
+                if os.path.isdir(target_path):
+                    os.symlink(target_path, link_path, target_is_directory=True)
+                else:
+                    os.symlink(target_path, link_path)
         except Exception as e:
             # Fallback: Create a text file indicating the link
             try:
                 with open(link_path + "_link.txt", "w") as f:
                     f.write(f"Link to: {target_path}\n")
                     f.write(f"Error creating shortcut: {str(e)}\n")
-                    f.write("Try running the application as administrator.\n")
+                    if is_windows:
+                        f.write("Try installing pywin32: pip install pywin32\n")
+                    else:
+                        f.write("Check file permissions and try again.\n")
             except:
                 pass
     
