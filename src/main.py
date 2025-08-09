@@ -66,45 +66,37 @@ class MainApplication:
     
     def _create_ui(self):
         """Create the main UI layout"""
-        # Left panel (main controls)
-        self._create_left_panel()
+        # Create a container frame for better control
+        container = tk.Frame(self.root)
+        container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Configure container grid
+        container.grid_columnconfigure(0, weight=1)
+        container.grid_columnconfigure(1, weight=0)
+        container.grid_rowconfigure(0, weight=0)  # Project creation row
+        container.grid_rowconfigure(1, weight=1)  # Main panels row
+        
+        # Project creation section (spans both columns)
+        self._create_project_creation_section_in_container(container)
+        
+        # Left panel (config section)
+        self._create_left_panel_in_container(container)
         
         # Right panel (project list)
-        self._create_right_panel()
+        self._create_right_panel_in_container(container)
     
-    def _create_left_panel(self):
-        """Create left panel with project creation and configuration"""
-        self.main_frame = tk.Frame(self.root, width=400)
-        self.main_frame.grid(row=0, column=0, sticky="nsew", padx=(10, 0), pady=10)
-        self.main_frame.grid_rowconfigure(1, weight=1)  # Give weight to config section only
-        self.main_frame.grid_columnconfigure(0, weight=1)
-        
-        # Project creation section
-        self._create_project_creation_section()
-        
-        # Configuration section (this gets the weight)
-        self._create_config_section()
-    
-    def _create_project_creation_section(self):
-        """Create project creation controls"""
-        # Create a frame for project creation controls to better control layout
-        project_frame = tk.Frame(self.main_frame)
-        project_frame.grid(row=0, column=0, columnspan=4, sticky="ew", padx=10, pady=10)
-        # Don't give weight to any column to keep controls tight together
+    def _create_project_creation_section_in_container(self, container):
+        """Create project creation controls in container"""
+        project_frame = tk.Frame(container)
+        project_frame.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 10))
         
         # Project name input
-        tk.Label(project_frame, text="Project Name:").grid(
-            row=0, column=0, padx=(0, 5), pady=0, sticky="w"
-        )
+        tk.Label(project_frame, text="Project Name:").pack(side=tk.LEFT, padx=(0, 5))
         
         self.project_name_var = tk.StringVar()
-        tk.Entry(project_frame, textvariable=self.project_name_var, width=32).grid(
-            row=0, column=1, padx=(0, 5), pady=0, sticky="w"
-        )
+        tk.Entry(project_frame, textvariable=self.project_name_var, width=32).pack(side=tk.LEFT, padx=(0, 5))
         
-        tk.Button(project_frame, text="Create Project", command=self._create_project).grid(
-            row=0, column=2, padx=(0, 10), pady=0, sticky="w"
-        )
+        tk.Button(project_frame, text="Create Project", command=self._create_project).pack(side=tk.LEFT, padx=(0, 10))
         
         # Status/notice label
         self.notice_var = tk.StringVar(value=" ")
@@ -112,15 +104,15 @@ class MainApplication:
             project_frame, textvariable=self.notice_var, 
             fg="green", width=24, anchor="w"
         )
-        self.notice_label.grid(row=0, column=3, padx=(0, 0), pady=0, sticky="w")
+        self.notice_label.pack(side=tk.LEFT)
     
-    def _create_config_section(self):
-        """Create configuration section"""
+    def _create_left_panel_in_container(self, container):
+        """Create left panel (config) in container"""
         self.config_frame = tk.LabelFrame(
-            self.main_frame, text="Config", padx=5, pady=5
+            container, text="Config", padx=5, pady=5
         )
         self.config_frame.grid(
-            row=1, column=0, columnspan=4, padx=10, pady=(5, 10), sticky="nsew"
+            row=1, column=0, sticky="nsew", padx=(0, 5)
         )
         self.config_frame.columnconfigure(0, weight=1)
         self.config_frame.rowconfigure(1, weight=1)  # Give weight to structure panel
@@ -135,12 +127,11 @@ class MainApplication:
             self.config_frame, self.structure_manager
         )
     
-    def _create_right_panel(self):
-        """Create right panel with project list"""
-        self.right_frame = tk.Frame(self.root, width=600)
+    def _create_right_panel_in_container(self, container):
+        """Create right panel (project list) in container"""
+        self.right_frame = tk.Frame(container, width=600)
         self.right_frame.grid(
-            row=0, column=1, rowspan=10, sticky="nswe", 
-            padx=(10, 10), pady=10
+            row=1, column=1, sticky="nsew", padx=(5, 0)
         )
         self.right_frame.grid_propagate(False)
         
