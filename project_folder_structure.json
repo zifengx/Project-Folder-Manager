@@ -1,6 +1,6 @@
 {
     "parent_directory": "",
-    "sync_directory": "",
+    "sync_directory": "D:/Syncdisks/ManualSyncdisk/03Projects/00TempProject",
     "folders": [
         {
             "name": "backup",
@@ -27,7 +27,8 @@
         },
         {
             "name": "queries",
-            "comment": "Query files for database operations"
+            "comment": "Query files for database operations",
+            "attribute": "auto"
         },
         {
             "name": "code",

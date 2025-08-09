@@ -171,16 +171,144 @@ class StructureManager:
         with open(STRUCTURE_JSON, "w", encoding="utf-8") as f:
             json.dump(structure, f, indent=4, ensure_ascii=False)
     
-    def create_project_folders(self, project_path: str, structure: Dict):
-        """Create project folder structure"""
-        os.makedirs(project_path)
-        self._create_items(project_path, structure.get("folders", []))
+    def create_project_folders(self, parent_path: str, structure: Dict, sync_path: str = None):
+        """Create project folder structure with sync/manual/auto logic"""
+        import sys
+        is_windows = sys.platform.startswith("win")
         
-        # Create files
+        if not sync_path or os.path.normpath(sync_path) == os.path.normpath(parent_path):
+            # Legacy behavior: create everything in parent_path
+            os.makedirs(parent_path, exist_ok=True)
+            self._create_items(parent_path, structure.get("folders", []))
+            for file_item in structure.get("files", []):
+                file_path = os.path.join(parent_path, file_item["name"])
+                with open(file_path, "w", encoding="utf-8") as f:
+                    f.write("")
+            return
+
+        # Check if there are any auto items
+        has_auto_items = self._has_auto_items(structure)
+        
+        # Always create parent directory
+        os.makedirs(parent_path, exist_ok=True)
+        
+        # Only create sync directory if there are auto items
+        if has_auto_items:
+            os.makedirs(sync_path, exist_ok=True)
+        
+        # Place auto items in sync_path, manual items in parent_path
+        self._create_items_sync(parent_path, sync_path if has_auto_items else None, structure.get("folders", []))
+        self._create_files_sync(parent_path, sync_path if has_auto_items else None, structure.get("files", []))
+
+    def _has_auto_items(self, structure: Dict) -> bool:
+        """Check if structure contains any auto items (folders or files)"""
+        # Check files
         for file_item in structure.get("files", []):
-            file_path = os.path.join(project_path, file_item["name"])
-            with open(file_path, "w", encoding="utf-8") as f:
-                f.write("")
+            if file_item.get("attribute", "manual") == "auto":
+                return True
+        
+        # Check folders recursively
+        def check_folders(folders):
+            for folder in folders:
+                if folder.get("attribute", "manual") == "auto":
+                    return True
+                if "folders" in folder and check_folders(folder["folders"]):
+                    return True
+            return False
+        
+        return check_folders(structure.get("folders", []))
+
+    def _create_items_sync(self, parent_path, sync_path, items):
+        import sys
+        is_windows = sys.platform.startswith("win")
+        for item in items:
+            sync_mode = item.get("attribute", "manual")
+            folder_name = item["name"]
+            if sync_mode == "auto" and sync_path:
+                # Create folder in sync directory
+                sync_folder = os.path.join(sync_path, folder_name)
+                os.makedirs(sync_folder, exist_ok=True)
+                # Create shortcut/symlink in parent directory
+                link_path = os.path.join(parent_path, folder_name)
+                self._create_folder_shortcut(link_path, sync_folder, is_windows)
+                # Recurse into subfolders (create subfolders in sync directory)
+                if "folders" in item:
+                    self._create_items_sync(sync_folder, sync_folder, item["folders"])
+            else:
+                # Create folder in parent directory (for manual items or when no sync_path)
+                manual_folder = os.path.join(parent_path, folder_name)
+                os.makedirs(manual_folder, exist_ok=True)
+                # Recurse into subfolders (keep using sync_path for potential auto subfolders)
+                if "folders" in item:
+                    self._create_items_sync(manual_folder, sync_path, item["folders"])
+
+    def _create_files_sync(self, parent_path, sync_path, files):
+        import sys
+        is_windows = sys.platform.startswith("win")
+        for file_item in files:
+            sync_mode = file_item.get("attribute", "manual")
+            file_name = file_item["name"]
+            if sync_mode == "auto" and sync_path:
+                # Create file in sync directory
+                sync_file = os.path.join(sync_path, file_name)
+                with open(sync_file, "w", encoding="utf-8") as f:
+                    f.write("")
+                # Create shortcut/symlink in parent directory
+                link_path = os.path.join(parent_path, file_name)
+                self._create_file_shortcut(link_path, sync_file, is_windows)
+            else:
+                # Create file in parent directory (for manual items or when no sync_path)
+                manual_file = os.path.join(parent_path, file_name)
+                with open(manual_file, "w", encoding="utf-8") as f:
+                    f.write("")
+
+    def _create_folder_shortcut(self, link_path, target_path, is_windows):
+        import os
+        try:
+            if is_windows:
+                # Create directory symlink (should work with admin privileges)
+                os.symlink(target_path, link_path, target_is_directory=True)
+            else:
+                os.symlink(target_path, link_path, target_is_directory=True)
+        except Exception as e:
+            # Fallback: Create a text file indicating the link
+            try:
+                with open(link_path + "_link.txt", "w") as f:
+                    f.write(f"Link to: {target_path}\n")
+                    f.write(f"Error creating symlink: {str(e)}\n")
+                    f.write("Try running the application as administrator.\n")
+            except:
+                pass
+
+    def _create_file_shortcut(self, link_path, target_path, is_windows):
+        import os
+        try:
+            if is_windows:
+                # Try to create Windows .lnk shortcut for files first
+                try:
+                    import pythoncom
+                    from win32com.shell import shell
+                    shortcut = pythoncom.CoCreateInstance(
+                        shell.CLSID_ShellLink, None, pythoncom.CLSCTX_INPROC_SERVER, shell.IID_IShellLink
+                    )
+                    shortcut.SetPath(target_path)
+                    shortcut.SetWorkingDirectory(os.path.dirname(target_path))
+                    persist_file = shortcut.QueryInterface(pythoncom.IID_IPersistFile)
+                    persist_file.Save(link_path + ".lnk", 0)
+                except Exception:
+                    # Fallback: create symlink (should work with admin privileges)
+                    os.symlink(target_path, link_path)
+            else:
+                os.symlink(target_path, link_path)
+        except Exception as e:
+            # Fallback: Create a text file indicating the link
+            try:
+                with open(link_path + "_link.txt", "w") as f:
+                    f.write(f"Link to: {target_path}\n")
+                    f.write(f"Error creating shortcut: {str(e)}\n")
+                    f.write("Try running the application as administrator.\n")
+            except:
+                pass
     
     def _create_items(self, base_path: str, items: List[Dict]):
         """Recursively create folder items"""

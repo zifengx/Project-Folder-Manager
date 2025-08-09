@@ -84,3 +84,7 @@ Run both ways to ensure compatibility:
 python main.py                    # Script mode
 py build.py && .\dist\*.exe      # Executable mode
 ```
+
+---
+## Additional Notes
+1. Update this instructions if needed when we we update this project files. 

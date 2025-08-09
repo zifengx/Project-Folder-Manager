@@ -4,11 +4,40 @@ Main application window and coordinator
 import tkinter as tk
 from tkinter import messagebox
 import os
+import sys
+import ctypes
+import subprocess
 from .config import *
 from .models import ProjectManager, StructureManager
 from .project_ui import ProjectListPanel
 from .structure_ui import StructurePanel, ParentDirectoryPanel, SyncDirectoryPanel
 from .ui_utils import ValidationHelper
+
+
+def is_admin():
+    """Check if running with administrator privileges on Windows"""
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False
+
+
+def run_as_admin():
+    """Restart the application with administrator privileges"""
+    try:
+        if getattr(sys, 'frozen', False):
+            # Running as executable
+            ctypes.windll.shell32.ShellExecuteW(
+                None, "runas", sys.executable, "", None, 1
+            )
+        else:
+            # Running as script
+            ctypes.windll.shell32.ShellExecuteW(
+                None, "runas", sys.executable, " ".join([f'"{arg}"' for arg in sys.argv]), None, 1
+            )
+        return True
+    except:
+        return False
 
 
 class MainApplication:
@@ -26,6 +55,28 @@ class MainApplication:
     def run(self):
         """Run the application"""
         try:
+            # Check for admin privileges on Windows
+            if sys.platform.startswith("win") and not is_admin():
+                # Create a temporary window to show the prompt
+                temp_root = tk.Tk()
+                temp_root.withdraw()  # Hide the window
+                
+                result = messagebox.askyesno(
+                    "Administrator Privileges Required",
+                    "This application needs administrator privileges to create shortcuts/symlinks.\n\n"
+                    "Would you like to restart with administrator privileges?\n\n"
+                    "Click 'No' to continue without shortcuts (text files will be created instead).",
+                    parent=temp_root
+                )
+                
+                temp_root.destroy()
+                
+                if result:
+                    if run_as_admin():
+                        return  # Exit current instance
+                    else:
+                        messagebox.showerror("Error", "Failed to restart with administrator privileges.")
+            
             self._initialize()
             self._create_ui()
             self._setup_event_handlers()
@@ -156,37 +207,39 @@ class MainApplication:
         """Create a new project"""
         project_name = self.project_name_var.get().strip()
         self.notice_var.set("")
-        
+
         # Validate project name
         name_error = ValidationHelper.validate_required_field(project_name, "Project name")
         if name_error:
             messagebox.showerror("Error", name_error)
             return
-        
-        # Get parent directory
+
+        # Get parent and sync directories
         parent_dir = self.structure_manager.get_parent_directory()
+        sync_dir = self.structure_manager.get_sync_directory()
         project_path = os.path.join(parent_dir, project_name)
-        
+        sync_project_path = os.path.join(sync_dir, project_name) if sync_dir else None
+
         # Check if project already exists
         if os.path.exists(project_path):
             messagebox.showerror("Error", f"Project '{project_name}' already exists.")
             return
-        
+
         try:
             # Create project folders
             structure = self.structure_manager.load_structure()
-            self.structure_manager.create_project_folders(project_path, structure)
-            
+            self.structure_manager.create_project_folders(project_path, structure, sync_project_path)
+
             # Add to project list
             project = self.project_manager.add_project(project_name)
-            
+
             # Refresh UI
             self.project_panel.refresh()
-            
+
             # Show success message
             self.notice_var.set(f"Project '{project_name}' Created!")
             self.project_name_var.set("")  # Clear input
-            
+
         except Exception as e:
             messagebox.showerror("Error", str(e))
     

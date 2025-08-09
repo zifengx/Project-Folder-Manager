@@ -1,0 +1,2 @@
+# Requirements for Project Folder Manager
+pywin32; platform_system == "Windows"
