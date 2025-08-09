@@ -21,7 +21,8 @@
         },
         {
             "name": "docs",
-            "comment": "General docs, normally need to sync with the cloud"
+            "comment": "General docs, normally need to sync with the cloud",
+            "attribute": "auto"
         },
         {
             "name": "queries",
@@ -36,6 +37,11 @@
         {
             "name": "code.txt",
             "comment": "a link to GitHub or SVN"
+        },
+        {
+            "name": "config.json",
+            "comment": "Configuration file that needs to be synced",
+            "attribute": "auto"
         }
     ]
 }

@@ -12,12 +12,13 @@ from .ui_utils import DialogManager, ValidationHelper, FormBuilder
 class StructureItemDialog:
     """Dialog for adding/editing structure items"""
     
-    def __init__(self, parent: tk.Widget, item_type: str, name: str = "", comment: str = ""):
+    def __init__(self, parent: tk.Widget, item_type: str, name: str = "", comment: str = "", attribute: str = "manual"):
         self.parent = parent
         self.item_type = item_type  # "Folder" or "File"
         self.result = None
         self.name = name
         self.comment = comment
+        self.attribute = attribute
         self._create_dialog()
     
     def _create_dialog(self):
@@ -36,6 +37,11 @@ class StructureItemDialog:
         
         # Comment field
         self.comment_var = self.form.add_text_field("Comment", self.comment)
+        
+        # Sync field (for both folders and files)
+        self.attribute_var = self.form.add_combobox(
+            "Sync", ["manual", "auto"], self.attribute
+        )
         
         # Buttons
         self.form.add_button_row([
@@ -76,6 +82,11 @@ class StructureItemDialog:
             "name": name,
             "comment": self.comment_var.get().strip()
         }
+        
+        # Add attribute for both folders and files
+        if self.attribute_var:
+            self.result["attribute"] = self.attribute_var.get()
+        
         self.dialog.destroy()
     
     def _on_cancel(self):
@@ -121,18 +132,20 @@ class StructurePanel:
         # Treeview
         self.tree = ttk.Treeview(
             self.visual_frame,
-            columns=("Type", "Comment"),
+            columns=("Type", "Attribute", "Comment"),
             show="tree headings"
         )
         
         # Configure columns
         self.tree.heading("#0", text="Name")
         self.tree.heading("Type", text="Type")
+        self.tree.heading("Attribute", text="Sync")
         self.tree.heading("Comment", text="Comment")
         
         self.tree.column("#0", width=120, anchor="w")
         self.tree.column("Type", width=60, anchor="center")
-        self.tree.column("Comment", width=320, anchor="w")
+        self.tree.column("Attribute", width=80, anchor="center")
+        self.tree.column("Comment", width=240, anchor="w")
         
         self.tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
@@ -192,9 +205,10 @@ class StructurePanel:
         name = self.tree.item(selected, "text")
         values = self.tree.item(selected, "values")
         item_type = values[0] if values else ""
-        comment = values[1] if len(values) > 1 else ""
+        attribute = values[1] if len(values) > 1 else "manual"
+        comment = values[2] if len(values) > 2 else ""
         
-        dialog = StructureItemDialog(self.frame, item_type, name, comment)
+        dialog = StructureItemDialog(self.frame, item_type, name, comment, attribute)
         result = dialog.show()
         
         if result:
@@ -232,6 +246,8 @@ class StructurePanel:
                 folder_item = {"name": item_data["name"], "folders": []}
                 if item_data["comment"]:
                     folder_item["comment"] = item_data["comment"]
+                if item_data.get("attribute", "manual") != "manual":
+                    folder_item["attribute"] = item_data["attribute"]
                 
                 if not selected:
                     structure["folders"].append(folder_item)
@@ -243,6 +259,8 @@ class StructurePanel:
                 file_item = {"name": item_data["name"]}
                 if item_data["comment"]:
                     file_item["comment"] = item_data["comment"]
+                if item_data.get("attribute", "manual") != "manual":
+                    file_item["attribute"] = item_data["attribute"]
                 structure["files"].append(file_item)
             
             self.structure_manager.save_structure(structure)
@@ -283,6 +301,12 @@ class StructurePanel:
                             file_item["comment"] = new_data["comment"]
                         elif "comment" in file_item:
                             del file_item["comment"]
+                        
+                        # Handle attribute for files
+                        if new_data.get("attribute", "manual") != "manual":
+                            file_item["attribute"] = new_data["attribute"]
+                        elif "attribute" in file_item:
+                            del file_item["attribute"]
                         break
             
             self.structure_manager.save_structure(structure)
@@ -299,6 +323,13 @@ class StructurePanel:
                     folder["comment"] = new_data["comment"]
                 elif "comment" in folder:
                     del folder["comment"]
+                
+                # Handle attribute
+                if new_data.get("attribute", "manual") != "manual":
+                    folder["attribute"] = new_data["attribute"]
+                elif "attribute" in folder:
+                    del folder["attribute"]
+                
                 return True
             if "folders" in folder and self._update_folder_recursive(folder["folders"], old_name, new_data):
                 return True
@@ -361,12 +392,15 @@ class StructurePanel:
         for item in items:
             comment = item.get("comment", "")
             item_type = "Folder" if is_folder else "File"
+            attribute = item.get("attribute", "manual")
+            
+            values = (item_type, attribute, comment)
             
             node = self.tree.insert(
                 parent, "end", 
                 text=item["name"], 
                 open=True,
-                values=(item_type, comment)
+                values=values
             )
             
             # Recursively add subfolders
