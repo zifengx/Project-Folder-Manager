@@ -203,3 +203,18 @@ class StructureManager:
         structure = self.load_structure()
         structure["parent_directory"] = path
         self.save_structure(structure)
+    
+    def get_sync_directory(self) -> str:
+        """Get configured sync directory"""
+        try:
+            structure = self.load_structure()
+            sync_dir = structure.get("sync_directory", "").strip()
+            return sync_dir if sync_dir else PROGRAM_ROOT
+        except Exception:
+            return PROGRAM_ROOT
+    
+    def set_sync_directory(self, path: str):
+        """Set sync directory"""
+        structure = self.load_structure()
+        structure["sync_directory"] = path
+        self.save_structure(structure)

@@ -1,5 +1,6 @@
 {
     "parent_directory": "",
+    "sync_directory": "",
     "folders": [
         {
             "name": "backup",
@@ -36,11 +37,7 @@
     "files": [
         {
             "name": "code.txt",
-            "comment": "a link to GitHub or SVN"
-        },
-        {
-            "name": "config.json",
-            "comment": "Configuration file that needs to be synced",
+            "comment": "a link to GitHub or SVN",
             "attribute": "auto"
         }
     ]

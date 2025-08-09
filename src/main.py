@@ -7,7 +7,7 @@ import os
 from .config import *
 from .models import ProjectManager, StructureManager
 from .project_ui import ProjectListPanel
-from .structure_ui import StructurePanel, ParentDirectoryPanel
+from .structure_ui import StructurePanel, ParentDirectoryPanel, SyncDirectoryPanel
 from .ui_utils import ValidationHelper
 
 
@@ -21,6 +21,7 @@ class MainApplication:
         self.project_panel = None
         self.structure_panel = None
         self.parent_dir_panel = None
+        self.sync_dir_panel = None
         
     def run(self):
         """Run the application"""
@@ -115,10 +116,15 @@ class MainApplication:
             row=1, column=0, sticky="nsew", padx=(0, 5)
         )
         self.config_frame.columnconfigure(0, weight=1)
-        self.config_frame.rowconfigure(1, weight=1)  # Give weight to structure panel
+        self.config_frame.rowconfigure(2, weight=1)  # Give weight to structure panel (moved to row 2)
         
         # Parent directory panel
         self.parent_dir_panel = ParentDirectoryPanel(
+            self.config_frame, self.structure_manager
+        )
+        
+        # Sync directory panel
+        self.sync_dir_panel = SyncDirectoryPanel(
             self.config_frame, self.structure_manager
         )
         

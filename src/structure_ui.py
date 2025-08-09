@@ -467,3 +467,52 @@ class ParentDirectoryPanel:
             self.path_var.set(path)
         except Exception:
             pass
+
+
+class SyncDirectoryPanel:
+    """Panel for managing sync directory"""
+    
+    def __init__(self, parent: tk.Widget, structure_manager: StructureManager):
+        self.parent = parent
+        self.structure_manager = structure_manager
+        self._create_ui()
+        self.refresh()
+    
+    def _create_ui(self):
+        """Create the UI components"""
+        self.frame = tk.Frame(self.parent)
+        
+        # Label
+        tk.Label(self.frame, text="Sync Directory:").pack(side=tk.LEFT, padx=(0, 5))
+        
+        # Entry (readonly)
+        self.path_var = tk.StringVar()
+        self.entry = tk.Entry(self.frame, textvariable=self.path_var, width=80, state="readonly")
+        self.entry.pack(side=tk.LEFT, padx=(0, 5))
+        
+        # Browse button
+        tk.Button(self.frame, text="Browse...", command=self._browse).pack(side=tk.LEFT)
+        
+        self.frame.pack(pady=5, anchor="w")
+    
+    def _browse(self):
+        """Browse for directory"""
+        selected = filedialog.askdirectory(
+            title="Select sync directory",
+            initialdir=self.path_var.get()
+        )
+        
+        if selected:
+            try:
+                self.structure_manager.set_sync_directory(selected)
+                self.refresh()
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to save sync directory: {e}")
+    
+    def refresh(self):
+        """Refresh the display"""
+        try:
+            path = self.structure_manager.get_sync_directory()
+            self.path_var.set(path)
+        except Exception:
+            pass
