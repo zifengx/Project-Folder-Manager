@@ -199,7 +199,7 @@ class ProjectListPanel:
         # Treeview
         self.tree = ttk.Treeview(
             self.visual_frame,
-            columns=("ID", "Name", "Description", "Status", "Start Date"),
+            columns=("ID", "Name", "Description", "Group", "Status", "Start Date", "End Date"),
             show="headings"
         )
         
@@ -207,14 +207,18 @@ class ProjectListPanel:
         self.tree.heading("ID", text="ID")
         self.tree.heading("Name", text="Name") 
         self.tree.heading("Description", text="Description")
+        self.tree.heading("Group", text="Group")
         self.tree.heading("Status", text="Status")
         self.tree.heading("Start Date", text="Start Date")
+        self.tree.heading("End Date", text="End Date")
         
         self.tree.column("ID", width=40, anchor="center")
-        self.tree.column("Name", width=140, anchor="w")
-        self.tree.column("Description", width=220, anchor="w")
-        self.tree.column("Status", width=100, anchor="center")
-        self.tree.column("Start Date", width=100, anchor="center")
+        self.tree.column("Name", width=120, anchor="w")
+        self.tree.column("Description", width=180, anchor="w")
+        self.tree.column("Group", width=100, anchor="w")
+        self.tree.column("Status", width=60, anchor="center")
+        self.tree.column("Start Date", width=80, anchor="center")
+        self.tree.column("End Date", width=80, anchor="center")
         
         self.tree.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
         
@@ -357,17 +361,26 @@ class ProjectListPanel:
         """Refresh tree view"""
         self.tree.delete(*self.tree.get_children())
         
+        # Load groups for group name lookup
+        groups = self.project_manager.load_groups()
+        group_dict = {group.id: group.name for group in groups}
+        
         # Sort projects by ID descending
         projects = sorted(self.project_manager.load_projects(), 
                          key=lambda p: p.id, reverse=True)
         
         for project in projects:
+            # Get group name or "None" if no group assigned
+            group_name = group_dict.get(project.group_id, "None") if project.group_id != 0 else "None"
+            
             values = (
                 project.id,
                 project.name,
                 project.description,
+                group_name,
                 project.status,
-                project.start_date
+                project.start_date,
+                project.end_date or ""  # Show empty string if no end date
             )
             
             if project.status == STATUS_INACTIVE:
