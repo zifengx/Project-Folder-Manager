@@ -233,7 +233,23 @@ class StructurePanel:
     
     def _on_double_click(self, event):
         """Handle double-click on tree item"""
-        self._edit_selected()
+        # Get the region that was clicked
+        region = self.tree.identify_region(event.x, event.y)
+        
+        # Only trigger edit if the click was on the item content, not on the tree icon
+        if region == "tree":
+            # Check if click was on the expand/collapse icon
+            element = self.tree.identify_element(event.x, event.y)
+            if element == "Treeitem.indicator":
+                # Click was on expand/collapse icon, don't trigger edit
+                return
+        
+        # Only edit if click was on item text or other content areas
+        if region in ("tree", "cell"):
+            # Prevent the default tree behavior (expand/collapse) when editing
+            self._edit_selected()
+            # Return "break" to stop event propagation
+            return "break"
     
     def _add_item_to_structure(self, item_data: Dict, is_folder: bool):
         """Add item to structure"""
