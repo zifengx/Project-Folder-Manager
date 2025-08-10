@@ -85,6 +85,17 @@ python main.py                    # Script mode
 py build.py && .\dist\*.exe      # Executable mode
 ```
 
+## Layout Structure
+
+Top Section (Two Columns):
+┌─────────────────────────────────┬─────────────────────────────────┐
+│ Project Name: [input] [Create]  │ Project Group: [input] [Create] │ 
+└─────────────────────────────────┼─────────────────────────────────┘
+┌─────────────────────────────────┼─────────────────────────────────┐
+│ Left Panel: Structure Config    │ Right Panel: Project List       │
+└─────────────────────────────────┴─────────────────────────────────┘
 ---
 ## Additional Notes
 1. Update this instructions if needed when we we update this project files. 
+
+

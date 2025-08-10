@@ -89,24 +89,45 @@ class MainApplication:
     
     def _create_project_creation_section_in_container(self, container):
         """Create project creation controls in container"""
+        # Project creation section (left side, in column 0)
         project_frame = tk.Frame(container)
-        project_frame.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 10))
+        project_frame.grid(row=0, column=0, sticky="ew", pady=(0, 10), padx=(0, 5))
         
         # Project name input
         tk.Label(project_frame, text="Project Name:").pack(side=tk.LEFT, padx=(0, 5))
         
         self.project_name_var = tk.StringVar()
-        tk.Entry(project_frame, textvariable=self.project_name_var, width=32).pack(side=tk.LEFT, padx=(0, 5))
+        tk.Entry(project_frame, textvariable=self.project_name_var, width=25).pack(side=tk.LEFT, padx=(0, 5))
         
         tk.Button(project_frame, text="Create Project", command=self._create_project).pack(side=tk.LEFT, padx=(0, 10))
         
-        # Status/notice label
+        # Status/notice label for project
         self.notice_var = tk.StringVar(value=" ")
         self.notice_label = tk.Label(
             project_frame, textvariable=self.notice_var, 
-            fg="green", width=24, anchor="w"
+            fg="green", width=20, anchor="w"
         )
         self.notice_label.pack(side=tk.LEFT)
+        
+        # Group creation section (right side, in column 1 - aligned with Project List)
+        group_frame = tk.Frame(container)
+        group_frame.grid(row=0, column=1, sticky="ew", pady=(0, 10), padx=(5, 0))
+        
+        # Group name input
+        tk.Label(group_frame, text="Project Group:").pack(side=tk.LEFT, padx=(0, 5))
+        
+        self.group_name_var = tk.StringVar()
+        tk.Entry(group_frame, textvariable=self.group_name_var, width=25).pack(side=tk.LEFT, padx=(0, 5))
+        
+        tk.Button(group_frame, text="Create Group", command=self._create_group).pack(side=tk.LEFT, padx=(0, 10))
+        
+        # Status/notice label for group
+        self.group_notice_var = tk.StringVar(value=" ")
+        self.group_notice_label = tk.Label(
+            group_frame, textvariable=self.group_notice_var, 
+            fg="green", width=18, anchor="w"
+        )
+        self.group_notice_label.pack(side=tk.LEFT)
     
     def _create_left_panel_in_container(self, container):
         """Create left panel (config) in container"""
@@ -192,6 +213,36 @@ class MainApplication:
 
         except Exception as e:
             messagebox.showerror("Error", str(e))
+    
+    def _create_group(self):
+        """Create a new project group"""
+        from tkinter import messagebox
+        
+        group_name = self.group_name_var.get().strip()
+        self.group_notice_var.set("")
+        
+        # Validate group name
+        name_error = ValidationHelper.validate_required_field(group_name, "Group name")
+        if name_error:
+            messagebox.showerror("Error", name_error)
+            return
+        
+        try:
+            # Create the group
+            group = self.project_manager.add_group(group_name)
+            
+            # Show success message
+            self.group_notice_var.set(f"Group '{group_name}' Created!")
+            self.group_name_var.set("")  # Clear input
+            
+            # Refresh project panel if needed
+            if hasattr(self, 'project_panel') and self.project_panel:
+                self.project_panel.refresh()
+                
+        except ValueError as e:
+            messagebox.showerror("Error", str(e))
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to create group: {e}")
     
     def _on_project_changed(self):
         """Handle project list changes"""

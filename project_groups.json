@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "name": "Development",
+    "description": "Development projects"
+  },
+  {
+     "id": 2,
+    "name": "Dev1",
+    "description": "Development projects"
+  },
+  {
+     "id": 3,
+    "name": "Dev2",
+    "description": "Development projects"
+  }
+]

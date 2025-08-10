@@ -18,6 +18,7 @@ else:
 STRUCTURE_FILENAME = "project_folder_structure.json"
 STRUCTURE_JSON = os.path.join(PROGRAM_ROOT, STRUCTURE_FILENAME)
 PROJECT_LISTS_FILE = os.path.join(PROGRAM_ROOT, "project_lists.json")
+PROJECT_GROUPS_FILE = os.path.join(PROGRAM_ROOT, "project_groups.json")
 
 # UI Constants
 WINDOW_WIDTH = 1500

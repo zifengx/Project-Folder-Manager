@@ -5,7 +5,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
 import json
 from typing import List, Optional, Callable
-from .models import Project, ProjectManager
+from .models import Project, ProjectManager, ProjectGroup
 from .ui_utils import DialogManager, ValidationHelper, FormBuilder
 from .config import STATUS_OPTIONS, STATUS_ACTIVE, STATUS_INACTIVE
 import datetime
@@ -14,8 +14,9 @@ import datetime
 class ProjectDialog:
     """Dialog for adding/editing projects"""
     
-    def __init__(self, parent: tk.Widget, project: Optional[Project] = None):
+    def __init__(self, parent: tk.Widget, project_manager: ProjectManager, project: Optional[Project] = None):
         self.parent = parent
+        self.project_manager = project_manager
         self.project = project
         self.result = None
         self._create_dialog()
@@ -42,6 +43,23 @@ class ProjectDialog:
             self.project.start_date if self.project else datetime.date.today().isoformat(),
             width=20
         )
+        
+        # Group selection field
+        groups = self.project_manager.load_groups()
+        group_options = [("None", 0)] + [(group.name, group.id) for group in groups]
+        group_names = [item[0] for item in group_options]
+        
+        current_group_id = self.project.group_id if self.project else 0
+        current_group_name = "None"
+        for name, gid in group_options:
+            if gid == current_group_id:
+                current_group_name = name
+                break
+        
+        self.group_var = self.form.add_combobox(
+            "Project Group", group_names, current_group_name
+        )
+        self.group_options = group_options  # Store for later lookup
         
         # End date field (manual to maintain control logic)
         tk.Label(self.dialog, text="End Date:").grid(
@@ -105,6 +123,14 @@ class ProjectDialog:
             )
             return
         
+        # Get selected group ID
+        selected_group_name = self.group_var.get()
+        selected_group_id = 0
+        for name, gid in self.group_options:
+            if name == selected_group_name:
+                selected_group_id = gid
+                break
+        
         # Create result project
         if self.project:
             self.result = Project(
@@ -113,7 +139,8 @@ class ProjectDialog:
                 description=self.desc_var.get().strip(),
                 status=self.status_var.get(),
                 start_date=self.start_date_var.get().strip(),
-                end_date=self.end_date_var.get().strip()
+                end_date=self.end_date_var.get().strip(),
+                group_id=selected_group_id
             )
         else:
             self.result = Project(
@@ -122,7 +149,8 @@ class ProjectDialog:
                 description=self.desc_var.get().strip(),
                 status=self.status_var.get(),
                 start_date=self.start_date_var.get().strip(),
-                end_date=self.end_date_var.get().strip()
+                end_date=self.end_date_var.get().strip(),
+                group_id=selected_group_id
             )
         
         self.dialog.destroy()
@@ -225,13 +253,13 @@ class ProjectListPanel:
     
     def _on_add(self):
         """Add new project"""
-        dialog = ProjectDialog(self.frame)
+        dialog = ProjectDialog(self.frame, self.project_manager)
         project = dialog.show()
         
         if project:
             try:
                 self.project_manager.add_project(
-                    project.name, project.description, project.status
+                    project.name, project.description, project.status, project.group_id
                 )
                 self.refresh()
                 if self.on_project_changed:
@@ -251,7 +279,7 @@ class ProjectListPanel:
         if not project:
             return
         
-        dialog = ProjectDialog(self.frame, project)
+        dialog = ProjectDialog(self.frame, self.project_manager, project)
         updated_project = dialog.show()
         
         if updated_project:

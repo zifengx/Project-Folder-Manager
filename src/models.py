@@ -5,23 +5,48 @@ import os
 import json
 import datetime
 from typing import List, Dict, Optional
-from .config import STRUCTURE_JSON, PROJECT_LISTS_FILE, STATUS_ACTIVE, PROGRAM_ROOT
+from .config import STRUCTURE_JSON, PROJECT_LISTS_FILE, STATUS_ACTIVE, PROGRAM_ROOT, PROJECT_GROUPS_FILE
 import sys
 import shutil
 import tempfile
+
+
+class ProjectGroup:
+    """Represents a project group"""
+    
+    def __init__(self, id: int, name: str, description: str = ""):
+        self.id = id
+        self.name = name
+        self.description = description
+    
+    def to_dict(self) -> Dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description
+        }
+    
+    @classmethod
+    def from_dict(cls, data: Dict) -> 'ProjectGroup':
+        return cls(
+            id=data.get("id", 0),
+            name=data.get("name", ""),
+            description=data.get("description", "")
+        )
 
 
 class Project:
     """Represents a project with metadata"""
     
     def __init__(self, id: int, name: str, description: str = "", 
-                 status: str = STATUS_ACTIVE, start_date: str = "", end_date: str = ""):
+                 status: str = STATUS_ACTIVE, start_date: str = "", end_date: str = "", group_id: int = 0):
         self.id = id
         self.name = name
         self.description = description
         self.status = status
         self.start_date = start_date or datetime.date.today().isoformat()
         self.end_date = end_date
+        self.group_id = group_id
     
     def to_dict(self) -> Dict:
         return {
@@ -30,7 +55,8 @@ class Project:
             "description": self.description,
             "status": self.status,
             "start_date": self.start_date,
-            "end_date": self.end_date
+            "end_date": self.end_date,
+            "group_id": self.group_id
         }
     
     @classmethod
@@ -41,7 +67,8 @@ class Project:
             description=data.get("description", ""),
             status=data.get("status", STATUS_ACTIVE),
             start_date=data.get("start_date", ""),
-            end_date=data.get("end_date", "")
+            end_date=data.get("end_date", ""),
+            group_id=data.get("group_id", 0)
         )
 
 
@@ -89,7 +116,7 @@ class ProjectManager:
             return 1
         return max(proj.id for proj in projects) + 1
     
-    def add_project(self, name: str, description: str = "", status: str = STATUS_ACTIVE) -> Project:
+    def add_project(self, name: str, description: str = "", status: str = STATUS_ACTIVE, group_id: int = 0) -> Project:
         """Add a new project"""
         projects = self.load_projects()
         
@@ -101,7 +128,8 @@ class ProjectManager:
             id=self.get_next_id(projects),
             name=name,
             description=description,
-            status=status
+            status=status,
+            group_id=group_id
         )
         
         projects.append(new_project)
@@ -123,6 +151,55 @@ class ProjectManager:
         projects = self.load_projects()
         projects = [proj for proj in projects if proj.id != project_id]
         self.save_projects(projects)
+    
+    def load_groups(self) -> List[ProjectGroup]:
+        """Load all project groups from file"""
+        if os.path.exists(PROJECT_GROUPS_FILE):
+            try:
+                with open(PROJECT_GROUPS_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    return [ProjectGroup.from_dict(group_data) for group_data in data]
+            except Exception:
+                pass
+        return []
+    
+    def save_groups(self, groups: List[ProjectGroup]):
+        """Save project groups to file"""
+        data = [group.to_dict() for group in groups]
+        with open(PROJECT_GROUPS_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+    
+    def get_next_group_id(self, groups: List[ProjectGroup]) -> int:
+        """Get next available group ID"""
+        if not groups:
+            return 1
+        return max(group.id for group in groups) + 1
+    
+    def add_group(self, name: str, description: str = "") -> ProjectGroup:
+        """Add a new project group"""
+        groups = self.load_groups()
+        
+        # Check for duplicate names
+        if any(group.name == name for group in groups):
+            raise ValueError(f"Group '{name}' already exists")
+        
+        new_group = ProjectGroup(
+            id=self.get_next_group_id(groups),
+            name=name,
+            description=description
+        )
+        
+        groups.append(new_group)
+        self.save_groups(groups)
+        return new_group
+    
+    def get_group_by_id(self, group_id: int) -> Optional[ProjectGroup]:
+        """Get a group by its ID"""
+        groups = self.load_groups()
+        for group in groups:
+            if group.id == group_id:
+                return group
+        return None
 
 
 class StructureManager:
