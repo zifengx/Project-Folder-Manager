@@ -114,7 +114,7 @@ class MainApplication:
         group_frame.grid(row=0, column=1, sticky="ew", pady=(0, 10), padx=(5, 0))
         
         # Group name input
-        tk.Label(group_frame, text="Project Group:").pack(side=tk.LEFT, padx=(0, 5))
+        tk.Label(group_frame, text="Group Name:").pack(side=tk.LEFT, padx=(0, 5))
         
         self.group_name_var = tk.StringVar()
         tk.Entry(group_frame, textvariable=self.group_name_var, width=25).pack(side=tk.LEFT, padx=(0, 5))
