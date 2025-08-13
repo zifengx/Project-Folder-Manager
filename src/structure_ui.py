@@ -110,8 +110,8 @@ class StructurePanel:
     
     def _create_ui(self):
         """Create the UI components"""
-        # Main frame
-        self.frame = tk.LabelFrame(self.parent, text="Folder Structure", padx=5, pady=5)
+        # Main frame - removed LabelFrame to avoid duplication
+        self.frame = tk.Frame(self.parent)
         self.frame.pack(fill=tk.BOTH, expand=True)
         
         # Notebook for tabs
@@ -467,10 +467,7 @@ class ParentDirectoryPanel:
         """Create the UI components"""
         self.frame = tk.Frame(self.parent)
         
-        # Label
-        tk.Label(self.frame, text="Parent Directory:").pack(side=tk.LEFT, padx=(0, 5))
-        
-        # Entry (readonly)
+        # Entry (readonly) - removed redundant label
         self.path_var = tk.StringVar()
         self.entry = tk.Entry(self.frame, textvariable=self.path_var, width=80, state="readonly")
         self.entry.pack(side=tk.LEFT, padx=(0, 5))
@@ -516,10 +513,7 @@ class SyncDirectoryPanel:
         """Create the UI components"""
         self.frame = tk.Frame(self.parent)
         
-        # Label
-        tk.Label(self.frame, text="Sync Directory:").pack(side=tk.LEFT, padx=(0, 5))
-        
-        # Entry (readonly)
+        # Entry (readonly) - removed redundant label
         self.path_var = tk.StringVar()
         self.entry = tk.Entry(self.frame, textvariable=self.path_var, width=80, state="readonly")
         self.entry.pack(side=tk.LEFT, padx=(0, 5))
@@ -561,62 +555,51 @@ class StructureConfigDialog:
         self.dialog = None
         
     def show(self):
-        """Show the structure config dialog"""
-        self.dialog = tk.Toplevel(self.parent)
-        self.dialog.title("Structure Configuration")
-        self.dialog.geometry("800x600")
+        """Show the structure config dialog using smooth DialogManager approach"""
+        self.dialog = DialogManager.create_modal_dialog(self.parent, "Structure Configuration", 900, 700)
         
-        # Center dialog
-        self._center_dialog()
+        # Create main container with proper layout
+        main_frame = tk.Frame(self.dialog)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
         
-        # Make it modal
-        self.dialog.transient(self.parent)
-        self.dialog.grab_set()
+        # Configure main frame grid
+        main_frame.grid_columnconfigure(0, weight=1)
+        main_frame.grid_rowconfigure(0, weight=0)  # Parent directory
+        main_frame.grid_rowconfigure(1, weight=0)  # Sync directory  
+        main_frame.grid_rowconfigure(2, weight=1)  # Structure panel
+        main_frame.grid_rowconfigure(3, weight=0)  # Close button
         
-        # Create notebook for tabs
-        notebook = ttk.Notebook(self.dialog)
-        
-        # Parent directory tab
-        parent_frame = tk.Frame(notebook)
+        # Parent directory section
+        parent_frame = tk.LabelFrame(main_frame, text="Parent Directory", padx=8, pady=8)
+        parent_frame.grid(row=0, column=0, sticky="ew", pady=(0, 10))
         self.parent_dir_panel = ParentDirectoryPanel(parent_frame, self.structure_manager)
-        notebook.add(parent_frame, text="Parent Directory")
         
-        # Sync directory tab  
-        sync_frame = tk.Frame(notebook)
+        # Sync directory section  
+        sync_frame = tk.LabelFrame(main_frame, text="Sync Directory", padx=8, pady=8)
+        sync_frame.grid(row=1, column=0, sticky="ew", pady=(0, 10))
         self.sync_dir_panel = SyncDirectoryPanel(sync_frame, self.structure_manager)
-        notebook.add(sync_frame, text="Sync Directory")
         
-        # Structure editor tab
-        structure_frame = tk.Frame(notebook)
+        # Structure editor section
+        structure_frame = tk.LabelFrame(main_frame, text="Folder Structure", padx=8, pady=8)
+        structure_frame.grid(row=2, column=0, sticky="nsew", pady=(0, 15))
         self.structure_panel = StructurePanel(structure_frame, self.structure_manager)
-        notebook.add(structure_frame, text="Folder Structure")
-        
-        notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         # Close button
-        btn_frame = tk.Frame(self.dialog)
-        tk.Button(btn_frame, text="Close", command=self._close).pack(pady=10)
-        btn_frame.pack()
+        btn_frame = tk.Frame(main_frame)
+        btn_frame.grid(row=3, column=0, sticky="ew")
+        tk.Button(
+            btn_frame, 
+            text="Close", 
+            command=self._close, 
+            width=12,
+            pady=3
+        ).pack(pady=5)
+        
+        # Center dialog using DialogManager
+        DialogManager.center_dialog(self.dialog, self.parent)
         
         # Handle window close
         self.dialog.protocol("WM_DELETE_WINDOW", self._close)
-        
-    def _center_dialog(self):
-        """Center the dialog on the parent window"""
-        self.dialog.update_idletasks()
-        
-        parent_x = self.parent.winfo_rootx()
-        parent_y = self.parent.winfo_rooty()
-        parent_w = self.parent.winfo_width()
-        parent_h = self.parent.winfo_height()
-        
-        dialog_w = 800
-        dialog_h = 600
-        
-        x = parent_x + (parent_w // 2) - (dialog_w // 2)
-        y = parent_y + (parent_h // 2) - (dialog_h // 2)
-        
-        self.dialog.geometry(f"{dialog_w}x{dialog_h}+{x}+{y}")
         
     def _close(self):
         """Close the dialog"""

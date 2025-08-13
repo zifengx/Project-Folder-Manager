@@ -87,9 +87,9 @@ py build.py && .\dist\*.exe      # Executable mode
 
 ## Layout Structure
 
-Menu Bar:
+Config Button:
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ Config Button (Click will pop up Structure Config)                         │
+│ [Config] Button (Click to open Structure Configuration dialog)             │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 Top Section (Two Columns):
@@ -101,6 +101,23 @@ Main Panels:
 ┌─────────────────────────────────┼─────────────────────────────────┐
 │ Left Panel: Project List        │ Right Panel: Group List         │
 └─────────────────────────────────┴─────────────────────────────────┘
+
+Conifig Dialog Stucture:
+┌─────────────────────────────────────────────────────────────────┐
+│                Structure Configuration                          │
+├─────────────────────────────────────────────────────────────────┤
+│ ┌─ Parent Directory ─────────────────────────────────────────┐ │
+│ │ [Entry field showing path] [Browse...] button              │ │
+│ └─────────────────────────────────────────────────────────────┘ │
+│ ┌─ Sync Directory ───────────────────────────────────────────┐ │
+│ │ [Entry field showing path] [Browse...] button              │ │
+│ └─────────────────────────────────────────────────────────────┘ │
+│ ┌─ Folder Structure ─────────────────────────────────────────┐ │
+│ │ [Visual Editor] [Raw JSON] tabs                            │ │
+│ │ (No duplicate "Folder Structure" label)                    │ │
+│ └─────────────────────────────────────────────────────────────┘ │
+│                        [Close]                                  │
+└─────────────────────────────────────────────────────────────────┘
 ---
 ## Additional Notes
 1. Update this instructions if needed when we we update this project files. 

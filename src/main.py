@@ -67,14 +67,7 @@ class MainApplication:
         self.root.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}+{x}+{y}")
     
     def _create_ui(self):
-        """Create the main UI layout with menu bar and rearranged panels"""
-        # Menu bar
-        menubar = tk.Menu(self.root)
-        config_menu = tk.Menu(menubar, tearoff=0)
-        config_menu.add_command(label="Config", command=self._show_structure_config)
-        menubar.add_cascade(label="Config", menu=config_menu)
-        self.root.config(menu=menubar)
-        
+        """Create the main UI layout with config button and rearranged panels"""
         # Create a container frame for better control
         container = tk.Frame(self.root)
         container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
@@ -82,8 +75,12 @@ class MainApplication:
         # Configure container grid for new layout
         container.grid_columnconfigure(0, weight=1)
         container.grid_columnconfigure(1, weight=1)
-        container.grid_rowconfigure(0, weight=0)  # Project creation row
-        container.grid_rowconfigure(1, weight=1)  # Main panels row
+        container.grid_rowconfigure(0, weight=0)  # Config button row
+        container.grid_rowconfigure(1, weight=0)  # Project creation row
+        container.grid_rowconfigure(2, weight=1)  # Main panels row
+        
+        # Config button section
+        self._create_config_button_section(container)
         
         # Project creation section (spans both columns)
         self._create_project_creation_section_in_container(container)
@@ -93,6 +90,21 @@ class MainApplication:
         
         # Right panel (group list)
         self._create_right_panel_in_container(container)
+    
+    def _create_config_button_section(self, container):
+        """Create config button section"""
+        config_frame = tk.Frame(container)
+        config_frame.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 10))
+        
+        tk.Button(
+            config_frame, 
+            text="Config", 
+            command=self._show_structure_config,
+            font=("Arial", 9),
+            relief="groove",
+            padx=15,
+            pady=3
+        ).pack(side=tk.LEFT)
     
     def _show_structure_config(self):
         """Show Structure Config popup dialog"""
@@ -104,7 +116,7 @@ class MainApplication:
         """Create project creation controls in container"""
         # Project creation section (left side, in column 0)
         project_frame = tk.Frame(container)
-        project_frame.grid(row=0, column=0, sticky="ew", pady=(0, 10), padx=(0, 5))
+        project_frame.grid(row=1, column=0, sticky="ew", pady=(0, 10), padx=(0, 5))
         
         # Project name input
         tk.Label(project_frame, text="Project Name:").pack(side=tk.LEFT, padx=(0, 5))
@@ -124,7 +136,7 @@ class MainApplication:
         
         # Group creation section (right side, in column 1 - aligned with Project List)
         group_frame = tk.Frame(container)
-        group_frame.grid(row=0, column=1, sticky="ew", pady=(0, 10), padx=(5, 0))
+        group_frame.grid(row=1, column=1, sticky="ew", pady=(0, 10), padx=(5, 0))
         
         # Group name input
         tk.Label(group_frame, text="Group Name:").pack(side=tk.LEFT, padx=(0, 5))
@@ -145,7 +157,7 @@ class MainApplication:
     def _create_left_panel_in_container(self, container):
         """Create left panel (Project List) in container"""
         self.left_frame = tk.Frame(container)
-        self.left_frame.grid(row=1, column=0, sticky="nsew", padx=(0, 5))
+        self.left_frame.grid(row=2, column=0, sticky="nsew", padx=(0, 5))
         
         # Project list panel
         self.project_panel = ProjectListPanel(
@@ -155,7 +167,7 @@ class MainApplication:
     def _create_right_panel_in_container(self, container):
         """Create right panel (Group List) in container"""
         self.right_frame = tk.Frame(container)
-        self.right_frame.grid(row=1, column=1, sticky="nsew", padx=(5, 0))
+        self.right_frame.grid(row=2, column=1, sticky="nsew", padx=(5, 0))
         
         # Group list panel
         from .group_ui import GroupListPanel
