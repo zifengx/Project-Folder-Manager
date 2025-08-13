@@ -87,12 +87,19 @@ py build.py && .\dist\*.exe      # Executable mode
 
 ## Layout Structure
 
+Menu Bar:
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ Config Button (Click will pop up Structure Config)                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
 Top Section (Two Columns):
 ┌─────────────────────────────────┬─────────────────────────────────┐
 │ Project Name: [input] [Create]  │ Project Group: [input] [Create] │ 
 └─────────────────────────────────┼─────────────────────────────────┘
+
+Main Panels:
 ┌─────────────────────────────────┼─────────────────────────────────┐
-│ Left Panel: Structure Config    │ Right Panel: Project List       │
+│ Left Panel: Project List        │ Right Panel: Group List         │
 └─────────────────────────────────┴─────────────────────────────────┘
 ---
 ## Additional Notes

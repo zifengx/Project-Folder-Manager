@@ -67,25 +67,38 @@ class MainApplication:
         self.root.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}+{x}+{y}")
     
     def _create_ui(self):
-        """Create the main UI layout"""
+        """Create the main UI layout with menu bar and rearranged panels"""
+        # Menu bar
+        menubar = tk.Menu(self.root)
+        config_menu = tk.Menu(menubar, tearoff=0)
+        config_menu.add_command(label="Config", command=self._show_structure_config)
+        menubar.add_cascade(label="Config", menu=config_menu)
+        self.root.config(menu=menubar)
+        
         # Create a container frame for better control
         container = tk.Frame(self.root)
         container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
-        # Configure container grid
+        # Configure container grid for new layout
         container.grid_columnconfigure(0, weight=1)
-        container.grid_columnconfigure(1, weight=0)
+        container.grid_columnconfigure(1, weight=1)
         container.grid_rowconfigure(0, weight=0)  # Project creation row
         container.grid_rowconfigure(1, weight=1)  # Main panels row
         
         # Project creation section (spans both columns)
         self._create_project_creation_section_in_container(container)
         
-        # Left panel (config section)
+        # Left panel (project list)
         self._create_left_panel_in_container(container)
         
-        # Right panel (project list)
+        # Right panel (group list)
         self._create_right_panel_in_container(container)
+    
+    def _show_structure_config(self):
+        """Show Structure Config popup dialog"""
+        from .structure_ui import StructureConfigDialog
+        dialog = StructureConfigDialog(self.root, self.structure_manager)
+        dialog.show()
     
     def _create_project_creation_section_in_container(self, container):
         """Create project creation controls in container"""
@@ -130,41 +143,23 @@ class MainApplication:
         self.group_notice_label.pack(side=tk.LEFT)
     
     def _create_left_panel_in_container(self, container):
-        """Create left panel (config) in container"""
-        self.config_frame = tk.LabelFrame(
-            container, text="Config", padx=5, pady=5
-        )
-        self.config_frame.grid(
-            row=1, column=0, sticky="nsew", padx=(0, 5)
-        )
-        self.config_frame.columnconfigure(0, weight=1)
-        self.config_frame.rowconfigure(2, weight=1)  # Give weight to structure panel (moved to row 2)
-        
-        # Parent directory panel
-        self.parent_dir_panel = ParentDirectoryPanel(
-            self.config_frame, self.structure_manager
-        )
-        
-        # Sync directory panel
-        self.sync_dir_panel = SyncDirectoryPanel(
-            self.config_frame, self.structure_manager
-        )
-        
-        # Structure panel
-        self.structure_panel = StructurePanel(
-            self.config_frame, self.structure_manager
-        )
-    
-    def _create_right_panel_in_container(self, container):
-        """Create right panel (project list) in container"""
-        self.right_frame = tk.Frame(container, width=600)
-        self.right_frame.grid(
-            row=1, column=1, sticky="nsew", padx=(5, 0)
-        )
-        self.right_frame.grid_propagate(False)
+        """Create left panel (Project List) in container"""
+        self.left_frame = tk.Frame(container)
+        self.left_frame.grid(row=1, column=0, sticky="nsew", padx=(0, 5))
         
         # Project list panel
         self.project_panel = ProjectListPanel(
+            self.left_frame, self.project_manager
+        )
+    
+    def _create_right_panel_in_container(self, container):
+        """Create right panel (Group List) in container"""
+        self.right_frame = tk.Frame(container)
+        self.right_frame.grid(row=1, column=1, sticky="nsew", padx=(5, 0))
+        
+        # Group list panel
+        from .group_ui import GroupListPanel
+        self.group_panel = GroupListPanel(
             self.right_frame, self.project_manager
         )
     
@@ -173,6 +168,10 @@ class MainApplication:
         # Connect project panel changes to refresh other panels
         if self.project_panel:
             self.project_panel.on_project_changed = self._on_project_changed
+        
+        # Connect group panel changes  
+        if hasattr(self, 'group_panel') and self.group_panel:
+            self.group_panel.on_group_changed = self._on_group_changed
     
     def _create_project(self):
         """Create a new project"""
@@ -248,6 +247,12 @@ class MainApplication:
         """Handle project list changes"""
         # Could add additional logic here if needed
         pass
+    
+    def _on_group_changed(self):
+        """Handle group list changes"""
+        # Refresh project panel to update group names in dropdowns
+        if hasattr(self, 'project_panel') and self.project_panel:
+            self.project_panel.refresh()
 
 
 def main():

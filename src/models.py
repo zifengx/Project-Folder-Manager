@@ -14,16 +14,18 @@ import tempfile
 class ProjectGroup:
     """Represents a project group"""
     
-    def __init__(self, id: int, name: str, description: str = ""):
+    def __init__(self, id: int, name: str, description: str = "", status: str = STATUS_ACTIVE):
         self.id = id
         self.name = name
         self.description = description
+        self.status = status
     
     def to_dict(self) -> Dict:
         return {
             "id": self.id,
             "name": self.name,
-            "description": self.description
+            "description": self.description,
+            "status": self.status
         }
     
     @classmethod
@@ -31,7 +33,8 @@ class ProjectGroup:
         return cls(
             id=data.get("id", 0),
             name=data.get("name", ""),
-            description=data.get("description", "")
+            description=data.get("description", ""),
+            status=data.get("status", STATUS_ACTIVE)
         )
 
 
@@ -175,7 +178,7 @@ class ProjectManager:
             return 1
         return max(group.id for group in groups) + 1
     
-    def add_group(self, name: str, description: str = "") -> ProjectGroup:
+    def add_group(self, name: str, description: str = "", status: str = STATUS_ACTIVE) -> ProjectGroup:
         """Add a new project group"""
         groups = self.load_groups()
         
@@ -186,12 +189,30 @@ class ProjectManager:
         new_group = ProjectGroup(
             id=self.get_next_group_id(groups),
             name=name,
-            description=description
+            description=description,
+            status=status
         )
         
         groups.append(new_group)
         self.save_groups(groups)
         return new_group
+    
+    def update_group(self, group_id: int, name: str, description: str, status: str):
+        """Update an existing project group"""
+        groups = self.load_groups()
+        for group in groups:
+            if group.id == group_id:
+                group.name = name
+                group.description = description
+                group.status = status
+                break
+        self.save_groups(groups)
+    
+    def delete_group(self, group_id: int):
+        """Delete a project group"""
+        groups = self.load_groups()
+        groups = [g for g in groups if g.id != group_id]
+        self.save_groups(groups)
     
     def get_group_by_id(self, group_id: int) -> Optional[ProjectGroup]:
         """Get a group by its ID"""

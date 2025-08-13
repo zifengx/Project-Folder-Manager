@@ -550,3 +550,75 @@ class SyncDirectoryPanel:
             self.path_var.set(path)
         except Exception:
             pass
+
+
+class StructureConfigDialog:
+    """Dialog for structure configuration including parent directory, sync directory, and structure editing"""
+    
+    def __init__(self, parent: tk.Widget, structure_manager: StructureManager):
+        self.parent = parent
+        self.structure_manager = structure_manager
+        self.dialog = None
+        
+    def show(self):
+        """Show the structure config dialog"""
+        self.dialog = tk.Toplevel(self.parent)
+        self.dialog.title("Structure Configuration")
+        self.dialog.geometry("800x600")
+        
+        # Center dialog
+        self._center_dialog()
+        
+        # Make it modal
+        self.dialog.transient(self.parent)
+        self.dialog.grab_set()
+        
+        # Create notebook for tabs
+        notebook = ttk.Notebook(self.dialog)
+        
+        # Parent directory tab
+        parent_frame = tk.Frame(notebook)
+        self.parent_dir_panel = ParentDirectoryPanel(parent_frame, self.structure_manager)
+        notebook.add(parent_frame, text="Parent Directory")
+        
+        # Sync directory tab  
+        sync_frame = tk.Frame(notebook)
+        self.sync_dir_panel = SyncDirectoryPanel(sync_frame, self.structure_manager)
+        notebook.add(sync_frame, text="Sync Directory")
+        
+        # Structure editor tab
+        structure_frame = tk.Frame(notebook)
+        self.structure_panel = StructurePanel(structure_frame, self.structure_manager)
+        notebook.add(structure_frame, text="Folder Structure")
+        
+        notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Close button
+        btn_frame = tk.Frame(self.dialog)
+        tk.Button(btn_frame, text="Close", command=self._close).pack(pady=10)
+        btn_frame.pack()
+        
+        # Handle window close
+        self.dialog.protocol("WM_DELETE_WINDOW", self._close)
+        
+    def _center_dialog(self):
+        """Center the dialog on the parent window"""
+        self.dialog.update_idletasks()
+        
+        parent_x = self.parent.winfo_rootx()
+        parent_y = self.parent.winfo_rooty()
+        parent_w = self.parent.winfo_width()
+        parent_h = self.parent.winfo_height()
+        
+        dialog_w = 800
+        dialog_h = 600
+        
+        x = parent_x + (parent_w // 2) - (dialog_w // 2)
+        y = parent_y + (parent_h // 2) - (dialog_h // 2)
+        
+        self.dialog.geometry(f"{dialog_w}x{dialog_h}+{x}+{y}")
+        
+    def _close(self):
+        """Close the dialog"""
+        if self.dialog:
+            self.dialog.destroy()
