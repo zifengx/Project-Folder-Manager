@@ -567,7 +567,6 @@ class StructureConfigDialog:
         main_frame.grid_rowconfigure(0, weight=0)  # Parent directory
         main_frame.grid_rowconfigure(1, weight=0)  # Sync directory  
         main_frame.grid_rowconfigure(2, weight=1)  # Structure panel
-        main_frame.grid_rowconfigure(3, weight=0)  # Close button
         
         # Parent directory section
         parent_frame = tk.LabelFrame(main_frame, text="Parent Directory", padx=8, pady=8)
@@ -583,17 +582,6 @@ class StructureConfigDialog:
         structure_frame = tk.LabelFrame(main_frame, text="Folder Structure", padx=8, pady=8)
         structure_frame.grid(row=2, column=0, sticky="nsew", pady=(0, 15))
         self.structure_panel = StructurePanel(structure_frame, self.structure_manager)
-        
-        # Close button
-        btn_frame = tk.Frame(main_frame)
-        btn_frame.grid(row=3, column=0, sticky="ew")
-        tk.Button(
-            btn_frame, 
-            text="Close", 
-            command=self._close, 
-            width=12,
-            pady=3
-        ).pack(pady=5)
         
         # Center dialog using DialogManager
         DialogManager.center_dialog(self.dialog, self.parent)

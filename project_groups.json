@@ -2,16 +2,19 @@
   {
     "id": 1,
     "name": "Development",
-    "description": "Development projects"
+    "description": "Development projects",
+    "status": "active"
   },
   {
-     "id": 2,
+    "id": 2,
     "name": "Dev1",
-    "description": "Development projects"
+    "description": "Development projects",
+    "status": "active"
   },
   {
-     "id": 3,
+    "id": 3,
     "name": "Dev2",
-    "description": "Development projects"
+    "description": "Development projects",
+    "status": "inactive"
   }
 ]
