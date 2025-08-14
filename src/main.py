@@ -246,7 +246,11 @@ class MainApplication:
             self.group_notice_var.set(f"Group '{group_name}' Created!")
             self.group_name_var.set("")  # Clear input
             
-            # Refresh project panel if needed
+            # Refresh group panel to show the new group
+            if hasattr(self, 'group_panel') and self.group_panel:
+                self.group_panel.refresh()
+            
+            # Refresh project panel if needed (for group dropdowns)
             if hasattr(self, 'project_panel') and self.project_panel:
                 self.project_panel.refresh()
                 
